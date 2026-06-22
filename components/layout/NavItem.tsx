@@ -2,16 +2,16 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import type { LucideIcon } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
 interface NavItemProps {
   href:  string
   label: string
-  icon:  LucideIcon
+  icon:  ReactNode
 }
 
-export function NavItem({ href, label, icon: Icon }: NavItemProps) {
+export function NavItem({ href, label, icon }: NavItemProps) {
   const pathname = usePathname()
   const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
 
@@ -25,7 +25,7 @@ export function NavItem({ href, label, icon: Icon }: NavItemProps) {
           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
       )}
     >
-      <Icon className="w-4 h-4 shrink-0" />
+      {icon}
       {label}
     </Link>
   )

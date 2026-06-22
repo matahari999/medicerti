@@ -5,9 +5,9 @@ import { NavItem } from './NavItem'
 import { UserMenu } from './UserMenu'
 
 const navItems = [
-  { href: '/dashboard',  label: '대시보드',  icon: LayoutDashboard },
-  { href: '/hospitals',  label: '병원 관리', icon: Building2 },
-  { href: '/settings/profile', label: '설정', icon: Settings },
+  { href: '/dashboard',  label: '대시보드',  icon: <LayoutDashboard className="w-4 h-4 shrink-0" /> },
+  { href: '/hospitals',  label: '병원 관리', icon: <Building2 className="w-4 h-4 shrink-0" /> },
+  { href: '/settings/profile', label: '설정', icon: <Settings className="w-4 h-4 shrink-0" /> },
 ] as const
 
 interface SidebarProps {
