@@ -90,7 +90,7 @@ export async function getHospitalWithMembers(hospitalId: string) {
 
   const { data: members } = await supabase
     .from('hospital_members')
-    .select('*, profiles(full_name, avatar_url, job_title)')
+    .select('*')
     .eq('hospital_id', hospitalId)
     .neq('status', 'removed')
     .order('created_at', { ascending: true })
