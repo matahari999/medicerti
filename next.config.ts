@@ -3,7 +3,6 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   serverExternalPackages: ['@supabase/supabase-js'],
   experimental: {
-    nodeMiddleware: true,
     serverActions: {
       bodySizeLimit: '52mb',
     },
