@@ -18,24 +18,45 @@ export async function isPlatformAdmin(): Promise<boolean> {
 export async function getAllHospitals(): Promise<(Hospital & { member_count: number; document_count: number })[]> {
   const supabase = await createServiceClient()
 
-  const { data, error } = await supabase
+  const { data: hospitals, error } = await supabase
     .from('hospitals')
-    .select(`
-      *,
-      hospital_members(count),
-      documents(count)
-    `)
+    .select('*')
     .order('created_at', { ascending: false })
 
-  if (error || !data) return []
+  if (error) {
+    console.error('[admin] getAllHospitals error:', error)
+    return []
+  }
+  if (!hospitals || hospitals.length === 0) return []
 
-  return (data as unknown as Array<Hospital & {
-    hospital_members: [{ count: number }]
-    documents: [{ count: number }]
-  }>).map((h) => ({
+  const ids = (hospitals as unknown as Hospital[]).map((h) => h.id)
+
+  const { data: memberCounts } = await supabase
+    .from('hospital_members')
+    .select('hospital_id')
+    .in('hospital_id', ids)
+    .eq('status', 'active')
+
+  const { data: docCounts } = await supabase
+    .from('documents')
+    .select('hospital_id')
+    .in('hospital_id', ids)
+    .is('deleted_at', null)
+
+  const memberMap = new Map<string, number>()
+  const docMap = new Map<string, number>()
+
+  for (const m of (memberCounts ?? []) as unknown as { hospital_id: string }[]) {
+    memberMap.set(m.hospital_id, (memberMap.get(m.hospital_id) ?? 0) + 1)
+  }
+  for (const d of (docCounts ?? []) as unknown as { hospital_id: string }[]) {
+    docMap.set(d.hospital_id, (docMap.get(d.hospital_id) ?? 0) + 1)
+  }
+
+  return (hospitals as unknown as Hospital[]).map((h) => ({
     ...h,
-    member_count: h.hospital_members?.[0]?.count ?? 0,
-    document_count: h.documents?.[0]?.count ?? 0,
+    member_count:   memberMap.get(h.id) ?? 0,
+    document_count: docMap.get(h.id) ?? 0,
   }))
 }
 
