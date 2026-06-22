@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PROTECTED_PREFIXES = ['/dashboard', '/hospitals', '/settings']
+const PROTECTED_PREFIXES = ['/dashboard', '/hospitals', '/settings', '/admin']
 const AUTH_PATHS = ['/login', '/register', '/forgot-password']
 const API_PREFIXES = ['/api/']
 

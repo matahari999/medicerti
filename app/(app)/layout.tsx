@@ -11,20 +11,21 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, avatar_url')
+    .select('full_name, avatar_url, is_platform_admin')
     .eq('id', user.id)
     .maybeSingle()
 
-  const profileData = profile as { full_name: string | null; avatar_url: string | null } | null
+  const profileData = profile as { full_name: string | null; avatar_url: string | null; is_platform_admin: boolean } | null
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <div className="hidden lg:flex">
         <Sidebar
           user={{
-            name:      profileData?.full_name ?? null,
-            email:     user.email!,
-            avatarUrl: profileData?.avatar_url ?? null,
+            name:             profileData?.full_name ?? null,
+            email:            user.email!,
+            avatarUrl:        profileData?.avatar_url ?? null,
+            isPlatformAdmin:  profileData?.is_platform_admin ?? false,
           }}
         />
       </div>

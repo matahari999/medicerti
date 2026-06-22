@@ -1,20 +1,21 @@
 import Link from 'next/link'
-import { LayoutDashboard, Building2, Settings } from 'lucide-react'
+import { LayoutDashboard, Building2, Settings, Shield } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { NavItem } from './NavItem'
 import { UserMenu } from './UserMenu'
 
 const navItems = [
-  { href: '/dashboard',  label: '대시보드',  icon: <LayoutDashboard className="w-4 h-4 shrink-0" /> },
-  { href: '/hospitals',  label: '병원 관리', icon: <Building2 className="w-4 h-4 shrink-0" /> },
-  { href: '/settings/profile', label: '설정', icon: <Settings className="w-4 h-4 shrink-0" /> },
+  { href: '/dashboard',        label: '대시보드',  icon: <LayoutDashboard className="w-4 h-4 shrink-0" /> },
+  { href: '/hospitals',        label: '병원 관리', icon: <Building2 className="w-4 h-4 shrink-0" /> },
+  { href: '/settings/profile', label: '설정',      icon: <Settings className="w-4 h-4 shrink-0" /> },
 ] as const
 
 interface SidebarProps {
   user: {
-    name:      string | null
-    email:     string
-    avatarUrl: string | null
+    name:             string | null
+    email:            string
+    avatarUrl:        string | null
+    isPlatformAdmin?: boolean
   }
 }
 
@@ -39,6 +40,17 @@ export function Sidebar({ user }: SidebarProps) {
         {navItems.map((item) => (
           <NavItem key={item.href} {...item} />
         ))}
+
+        {user.isPlatformAdmin && (
+          <>
+            <Separator className="my-2" />
+            <NavItem
+              href="/admin/hospitals"
+              label="플랫폼 관리"
+              icon={<Shield className="w-4 h-4 shrink-0 text-red-500" />}
+            />
+          </>
+        )}
       </nav>
 
       <Separator />
