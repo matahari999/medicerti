@@ -208,7 +208,7 @@ export default function DocumentsPage() {
   }, []);
 
   const handleDownload = (doc: DocumentTemplate) => {
-    const content = (doc as any).content || `# ${doc.title}\n\n이 문서는 메디인증 v3.0 표준 인증 문서 템플릿입니다.\n버전: ${doc.version}\n분류: ${doc.category}\n\n[규정 상세 내용]\n여기에 병원의 실제 실정에 부합하는 임상 지침 및 행정 절차를 기술하십시오.`;
+    const content = doc.content ?? `# ${doc.title}\n\n이 문서는 메디인증 v3.0 표준 인증 문서 템플릿입니다.\n버전: ${doc.version}\n분류: ${doc.category}\n\n[규정 상세 내용]\n여기에 병원의 실제 실정에 부합하는 임상 지침 및 행정 절차를 기술하십시오.`;
     const format = (doc.downloadFormats && doc.downloadFormats.length > 0 ? doc.downloadFormats[0] : 'docx') as string;
     
     const element = document.createElement("a");

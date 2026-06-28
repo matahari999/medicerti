@@ -4,7 +4,7 @@ const PROTECTED_PREFIXES = ['/dashboard', '/hospitals', '/settings', '/admin']
 const AUTH_PATHS = ['/login', '/register', '/forgot-password']
 const API_PREFIXES = ['/api/']
 
-const PROJECT_REF = 'oyivyltzugfzbozwxmew'
+const PROJECT_REF = 'johapmesoehvsjzxdwrw'
 
 function getSession(request: NextRequest): boolean {
   const cookieNames = [

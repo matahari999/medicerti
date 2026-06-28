@@ -76,7 +76,8 @@ export default async function PreparationPage({
     .eq('is_active', true)
     .order('sort_order', { ascending: true })
 
-  const criteria = (rows ?? []) as any[]
+  type CriteriaRow = { id: string; criterion_code: string; criterion_name: string; category: string; sort_order: number; is_active: boolean; preparation_progress?: { id: string; status: string; target_date: string | null; notes: string | null }[] }
+  const criteria = (rows ?? []) as CriteriaRow[]
 
   const today = new Date()
   const sevenDaysLater = new Date(today.getTime() + 7 * 86400000)

@@ -108,7 +108,7 @@ export default function ReportsPage() {
             if (profile && profile.hospital_id) {
               setHospitalInfo({
                 id: profile.hospital_id,
-                name: (profile.hospitals as any)?.name || '우리병원',
+                name: (profile.hospitals as { name?: string } | null)?.name ?? '우리병원',
               });
 
               // incident_reports 테이블에서 데이터 load

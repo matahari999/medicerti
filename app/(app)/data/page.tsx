@@ -94,9 +94,11 @@ export default function DataPortalPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {dataItems.map((item) => {
           // Mock 메타 (실제 연동 시 Supabase + API에서 가져옴)
-          const meta = (item.type === 'hospital_codes' || item.type === 'evaluation_scores'
-            ? mockPublicDataMeta[item.type as keyof typeof mockPublicDataMeta]
-            : null) as any;
+          type MetaEntry = { id: string; name: string; source: string; updatedAt: string; type: string; status?: string; referenceDate?: string; lastUpdated?: string };
+          const metaMap = mockPublicDataMeta as unknown as Record<string, MetaEntry>;
+          const meta: MetaEntry | null = (item.type === 'hospital_codes' || item.type === 'evaluation_scores')
+            ? (metaMap[item.type] ?? null)
+            : null;
 
           return (
             <Link
@@ -113,7 +115,7 @@ export default function DataPortalPage() {
                     <h3 className="font-bold text-sm text-slate-800 group-hover:text-blue-700 transition-colors">
                       {PUBLIC_DATA_TYPE_LABELS[item.type]}
                     </h3>
-                    {meta && <DataStatusBadge status={meta.status} />}
+                    {meta && <DataStatusBadge status={(meta.status ?? 'empty') as 'error' | 'ok' | 'empty' | 'stale'} />}
                     {!meta && <DataStatusBadge status="empty" />}
                   </div>
                   <p className="text-xs text-slate-500 mb-2">{item.desc}</p>
@@ -125,7 +127,7 @@ export default function DataPortalPage() {
                       <span>·</span>
                       <span>기준일: {meta.referenceDate || '확인 필요'}</span>
                       <span>·</span>
-                      <span>업데이트: {formatDate(meta.lastUpdated)}</span>
+                      <span>업데이트: {meta.lastUpdated ? formatDate(meta.lastUpdated) : '-'}</span>
                     </div>
                   ) : (
                     <div className="data-source">
