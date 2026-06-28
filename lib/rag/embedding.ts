@@ -1,10 +1,13 @@
-// 임베딩 유틸리티 — Gemini Embedding API 사용
-const EMBEDDING_MODEL = 'https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent';
+// Gemini text-embedding-004 — API key via header (not URL param) to avoid log exposure
+const EMBEDDING_API = 'https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent';
 
 export async function embedText(text: string, apiKey: string): Promise<number[]> {
-  const res = await fetch(`${EMBEDDING_MODEL}?key=${apiKey}`, {
+  const res = await fetch(EMBEDDING_API, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': apiKey,
+    },
     body: JSON.stringify({
       model: 'models/text-embedding-004',
       content: { parts: [{ text }] },
@@ -12,7 +15,7 @@ export async function embedText(text: string, apiKey: string): Promise<number[]>
   });
   if (!res.ok) throw new Error(`Embedding API error: ${res.status}`);
   const data = await res.json();
-  return data.embedding?.values || [];
+  return data.embedding?.values ?? [];
 }
 
 export function cosineSimilarity(a: number[], b: number[]): number {
@@ -27,12 +30,12 @@ export function cosineSimilarity(a: number[], b: number[]): number {
   return denom === 0 ? 0 : dot / denom;
 }
 
-export function chunkText(text: string, maxTokens = 512): string[] {
-  const sentences = text.split(/(?<=[.!?])\s+/);
+export function chunkText(text: string, maxChars = 2048): string[] {
+  const sentences = text.split(/(?<=[.!?。])\s+/);
   const chunks: string[] = [];
   let current = '';
   for (const s of sentences) {
-    if ((current + s).length > maxTokens * 4 && current) {
+    if (current.length + s.length > maxChars && current) {
       chunks.push(current.trim());
       current = s;
     } else {

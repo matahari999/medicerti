@@ -31,7 +31,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               <Shield className="w-4 h-4 text-white" />
             </div>
             <div>
-              <p className="font-bold text-white leading-none">AccrediQ</p>
+              <p className="font-bold text-white leading-none">메디인증</p>
               <p className="text-[10px] text-slate-400 mt-0.5">플랫폼 관리자</p>
             </div>
           </Link>
@@ -49,6 +49,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
           >
             사용자 관리
+          </Link>
+          <Link
+            href="/admin/tools"
+            className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+          >
+            어드민 도구
           </Link>
           <hr className="border-slate-700 my-2" />
           <Link

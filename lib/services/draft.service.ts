@@ -1,4 +1,4 @@
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { generateApplicationDraft } from '@/lib/gemini/draft'
 import { COMPLIANCE_STATUS_LABELS, SEVERITY_LABELS } from '@/lib/constants'
 
@@ -9,7 +9,7 @@ export async function generateApplicationDraftForHospital(
   analysisRunId: string,
   userId: string,
 ) {
-  const supabase = await createServiceClient()
+  const supabase = await createClient()
 
   const { data: hospital } = await supabase
     .from('hospitals')

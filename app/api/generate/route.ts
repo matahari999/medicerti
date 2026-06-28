@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { retrieveRelevantChunks, formatRagContext } from '@/lib/rag';
 
 function getMockResponse(hospitalType: string, hospitalName: string, documentType: string, documentTitle: string) {
       const hospitalTypeLabels: Record<string, string> = {
@@ -84,14 +85,22 @@ export async function POST(request: Request) {
       });
     }
 
-    // 2. 시스템/유저 프롬프트 준비
+    // 2. RAG: 관련 인증기준 청크 검색 (실패해도 생성 계속)
+    const ragQuery = `${documentTitle} ${documentType} ${hospitalType}`;
+    const ragChunks = await Promise.race([
+      retrieveRelevantChunks(ragQuery, hospitalType, apiKey, 5),
+      new Promise<[]>((r) => setTimeout(() => r([]), 5000)),
+    ]) as Awaited<ReturnType<typeof retrieveRelevantChunks>>;
+    const ragContext = formatRagContext(ragChunks);
+
+    // 3. 시스템/유저 프롬프트 준비
     const systemPrompt = `너는 대한민국 의료기관평가인증 기준 및 병원 규정 수립에 정통한 도메인 전문가이자 시니어 병원 행정 컨설턴트이다.
 병원 정보와 요청받은 문서 제목에 맞는 전문성 있고 규격화된 규정집/지침서/서식 초안을 마크다운 포맷으로 작성하라.
 
 반드시 다음 규칙을 최우선으로 지켜라:
 1. 문서 최상단에 대괄호와 함께 "[참고용 초안] 이 문서는 지능형 시스템이 생성한 참고용 초안으로, 법적 효력이 없습니다. 공식 제출 전 반드시 실무 검토가 필요합니다." 라는 한글 고지 문구를 필수 기재하라.
 2. 병원명, 병원 유형의 특성(예: 요양병원의 낙상, 억제대 특화 지침)에 부합하게 작성하라.
-3. 문서 내에 (작성일), (서명) 등 채워 넣어야 하는 실무 플레이스홀더를 제공하라.`;
+3. 문서 내에 (작성일), (서명) 등 채워 넣어야 하는 실무 플레이스홀더를 제공하라.${ragContext ? `\n\n[인증기준 참조 — RAG 검색 결과]\n${ragContext}` : ''}`;
 
     const userPrompt = `병원명: ${hospitalName}
 병원 유형: ${hospitalType}
@@ -99,17 +108,18 @@ export async function POST(request: Request) {
 문서 제목: ${documentTitle}
 추가 요구사항: ${additionalContext || '없음'}`;
 
-    // 3. API 키 유형 식별 및 호출 (신형 'AQ.' 및 구형 'AIza' 접두사 대응)
+    // 4. API 키 유형 식별 및 호출 (신형 'AQ.' 및 구형 'AIza' 접두사 대응)
     const isGemini = apiKey.startsWith('AIza') || apiKey.startsWith('AQ.') || !!process.env.GEMINI_API_KEY;
     let resultText = '';
 
     if (isGemini) {
       // Google Gemini API 호출 (gemini-1.5-pro 모델)
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
+      const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent';
       const response = await fetch(geminiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
         },
         body: JSON.stringify({
           contents: [

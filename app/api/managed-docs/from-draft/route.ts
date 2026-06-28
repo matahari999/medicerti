@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 /**
  * POST /api/managed-docs/from-draft
@@ -33,10 +33,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
   }
 
-  const service = await createServiceClient()
-
   // 원본 AI 초안 조회
-  const { data: draft, error: draftErr } = await service
+  const { data: draft, error: draftErr } = await supabase
     .from('policy_drafts')
     .select('*, accreditation_criteria(id, code, title)')
     .eq('id', policyDraftId)
@@ -47,7 +45,7 @@ export async function POST(request: Request) {
   }
 
   // 이미 가져온 문서가 있는지 확인
-  const { data: existing } = await service
+  const { data: existing } = await supabase
     .from('managed_documents')
     .select('id')
     .eq('hospital_id', hospitalId)
@@ -63,7 +61,7 @@ export async function POST(request: Request) {
 
   const criterionId = (draft.accreditation_criteria as { id: string } | null)?.id ?? null
 
-  const { data: newDoc, error } = await service
+  const { data: newDoc, error } = await supabase
     .from('managed_documents')
     .insert({
       hospital_id:     hospitalId,
@@ -83,7 +81,7 @@ export async function POST(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // 초기 버전 스냅샷
-  await service.from('managed_document_versions').insert({
+  await supabase.from('managed_document_versions').insert({
     document_id:    newDoc.id,
     hospital_id:    hospitalId,
     version_number: 1,
@@ -94,7 +92,7 @@ export async function POST(request: Request) {
     created_by:     user.id,
   })
 
-  await service.from('audit_logs').insert({
+  await supabase.from('audit_logs').insert({
     user_id:       user.id,
     hospital_id:   hospitalId,
     action:        'managed_doc.create_from_draft',

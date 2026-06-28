@@ -1,16 +1,13 @@
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import type { Hospital, HospitalMember } from '@/types/database.types'
 import type { HospitalInput } from '@/lib/validators/hospital'
 
 export async function getUserHospitals(): Promise<(Hospital & { role: string })[]> {
-  // 1. 일반 클라이언트로 사용자 인증 확인
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  // 2. 서비스 클라이언트로 RLS 우회 (서버 사이드 전용)
-  const service = await createServiceClient()
-  const { data, error } = await service
+  const { data, error } = await supabase
     .from('hospital_members')
     .select('role, hospitals(*)')
     .eq('user_id', user.id)
@@ -29,19 +26,7 @@ export async function getHospital(hospitalId: string): Promise<Hospital | null> 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  // 접근 권한 확인 후 서비스 클라이언트로 조회
-  const service = await createServiceClient()
-  const { data: member } = await service
-    .from('hospital_members')
-    .select('role')
-    .eq('hospital_id', hospitalId)
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .maybeSingle()
-
-  if (!member) return null
-
-  const { data, error } = await service
+  const { data, error } = await supabase
     .from('hospitals')
     .select('*')
     .eq('id', hospitalId)
@@ -65,8 +50,8 @@ export async function createHospital(input: HospitalInput): Promise<Hospital> {
   if (hospitalError) throw new Error(hospitalError.message)
   const h = hospital as unknown as Hospital
 
-  const service = await createServiceClient()
-  const { error: memberError } = await service
+  // 병원 생성자 자기자신 추가 — RLS 정책(20260629000002)으로 허용됨
+  const { error: memberError } = await supabase
     .from('hospital_members')
     .insert({
       hospital_id: h.id,
@@ -116,8 +101,7 @@ export async function getHospitalMembers(hospitalId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const service = await createServiceClient()
-  const { data, error } = await service
+  const { data, error } = await supabase
     .from('hospital_members')
     .select('*, profiles(full_name, avatar_url)')
     .eq('hospital_id', hospitalId)
@@ -131,8 +115,8 @@ export async function getHospitalMembers(hospitalId: string) {
 }
 
 export async function getHospitalDocumentStats(hospitalId: string) {
-  const service = await createServiceClient()
-  const { data, error } = await service
+  const supabase = await createClient()
+  const { data, error } = await supabase
     .from('documents')
     .select('status')
     .eq('hospital_id', hospitalId)
@@ -150,8 +134,8 @@ export async function getHospitalDocumentStats(hospitalId: string) {
 }
 
 export async function getLatestAnalysis(hospitalId: string) {
-  const service = await createServiceClient()
-  const { data } = await service
+  const supabase = await createClient()
+  const { data } = await supabase
     .from('analysis_runs')
     .select('id, overall_score, status, completed_at, created_at')
     .eq('hospital_id', hospitalId)

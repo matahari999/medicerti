@@ -5,7 +5,7 @@ import {
   fetchAllEvaluations,
   DataGoKrClientError,
 } from './data-gokr.client'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 export async function syncHospitalsFromDataGoKr(
   signal?: AbortSignal,
@@ -42,7 +42,7 @@ export async function syncHospitalsFromDataGoKr(
     }
 
     if (normalizedItems.length > 0) {
-      const supabase = await createServiceClient()
+      const supabase = await createClient()
       const { error: upsertError } = await supabase
         .from('hospitals')
         .upsert(
@@ -119,7 +119,7 @@ export async function syncEvaluationsFromDataGoKr(
     }
 
     if (normalizedItems.length > 0) {
-      const supabase = await createServiceClient()
+      const supabase = await createClient()
 
       const { error: upsertError } = await supabase
         .from('analysis_runs')

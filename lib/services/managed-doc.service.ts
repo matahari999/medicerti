@@ -1,4 +1,4 @@
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import type { ManagedDocument, ManagedDocumentVersion, ManagedDocType, ManagedDocStatus } from '@/types/database.types'
 
 export interface ManagedDocWithCriterion extends ManagedDocument {
@@ -20,9 +20,7 @@ export async function getManagedDocuments(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const service = await createServiceClient()
-
-  let q = service
+  let q = supabase
     .from('managed_documents')
     .select(`
       *,
@@ -44,8 +42,8 @@ export async function getManagedDocument(
   documentId: string,
   hospitalId: string
 ): Promise<ManagedDocWithCriterion | null> {
-  const service = await createServiceClient()
-  const { data, error } = await service
+  const supabase = await createClient()
+  const { data, error } = await supabase
     .from('managed_documents')
     .select(`
       *,
@@ -63,8 +61,8 @@ export async function getManagedDocument(
 export async function getManagedDocVersions(
   documentId: string
 ): Promise<ManagedDocumentVersion[]> {
-  const service = await createServiceClient()
-  const { data, error } = await service
+  const supabase = await createClient()
+  const { data, error } = await supabase
     .from('managed_document_versions')
     .select('*')
     .eq('document_id', documentId)
@@ -75,8 +73,8 @@ export async function getManagedDocVersions(
 }
 
 export async function getManagedDocStats(hospitalId: string) {
-  const service = await createServiceClient()
-  const { data, error } = await service
+  const supabase = await createClient()
+  const { data, error } = await supabase
     .from('managed_documents')
     .select('doc_type, status')
     .eq('hospital_id', hospitalId)

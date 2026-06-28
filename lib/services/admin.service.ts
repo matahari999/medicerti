@@ -1,4 +1,4 @@
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import type { Hospital, Profile, HospitalMember } from '@/types/database.types'
 
 export async function isPlatformAdmin(): Promise<boolean> {
@@ -16,7 +16,7 @@ export async function isPlatformAdmin(): Promise<boolean> {
 }
 
 export async function getAllHospitals(): Promise<(Hospital & { member_count: number; document_count: number })[]> {
-  const supabase = await createServiceClient()
+  const supabase = await createClient()
 
   const { data: hospitals, error } = await supabase
     .from('hospitals')
@@ -61,7 +61,7 @@ export async function getAllHospitals(): Promise<(Hospital & { member_count: num
 }
 
 export async function getAllUsers(): Promise<(Profile & { email: string })[]> {
-  const supabase = await createServiceClient()
+  const supabase = await createClient()
 
   const { data: profiles, error } = await supabase
     .from('profiles')
@@ -70,19 +70,14 @@ export async function getAllUsers(): Promise<(Profile & { email: string })[]> {
 
   if (error || !profiles) return []
 
-  // Supabase admin API returns UserList — type cast needed due to incomplete SDK types
-  const { data: adminData } = await (supabase.auth.admin.listUsers() as Promise<{ data: { users: { id: string; email?: string }[] } }>)
-  const users = adminData?.users ?? []
-  const emailMap = new Map(users.map((u) => [u.id, u.email ?? '']))
-
   return (profiles as unknown as Profile[]).map((p) => ({
     ...p,
-    email: emailMap.get(p.id) ?? '',
+    email: '',
   })) as (Profile & { email: string })[]
 }
 
 export async function getHospitalWithMembers(hospitalId: string) {
-  const supabase = await createServiceClient()
+  const supabase = await createClient()
 
   const { data: hospital } = await supabase
     .from('hospitals')
@@ -130,7 +125,7 @@ export async function setHospitalStatus(
   hospitalId: string,
   status: 'active' | 'suspended' | 'archived'
 ): Promise<void> {
-  const supabase = await createServiceClient()
+  const supabase = await createClient()
   const { error } = await supabase
     .from('hospitals')
     .update({ status } as never)
@@ -139,7 +134,7 @@ export async function setHospitalStatus(
 }
 
 export async function togglePlatformAdmin(userId: string, value: boolean): Promise<void> {
-  const supabase = await createServiceClient()
+  const supabase = await createClient()
   const { error } = await supabase
     .from('profiles')
     .update({ is_platform_admin: value } as never)

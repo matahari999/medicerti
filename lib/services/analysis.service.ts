@@ -1,11 +1,11 @@
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { runGapAnalysis, calculateScores } from '@/lib/gemini/analysis'
 import type { AccreditationCriterion, CriterionResultInsert, AnalysisRunInsert } from '@/types/database.types'
 
 // ponytail: single orchestrator, no base class, no abstraction
 
 export async function runFullAnalysis(hospitalId: string, userId: string) {
-  const supabase = await createServiceClient()
+  const supabase = await createClient()
 
   const { data: hospital } = await supabase
     .from('hospitals')

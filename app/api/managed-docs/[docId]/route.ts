@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { MANAGED_DOC_STATUS_TRANSITIONS } from '@/lib/constants'
 import type { ManagedDocStatus } from '@/types/database.types'
 
@@ -11,8 +11,7 @@ export async function GET(_req: Request, { params }: Params) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })
 
-  const service = await createServiceClient()
-  const { data: doc, error } = await service
+  const { data: doc, error } = await supabase
     .from('managed_documents')
     .select(`
       *,
@@ -36,7 +35,7 @@ export async function GET(_req: Request, { params }: Params) {
   if (!member) return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
 
   // 버전 이력
-  const { data: versions } = await service
+  const { data: versions } = await supabase
     .from('managed_document_versions')
     .select('*')
     .eq('document_id', docId)
@@ -58,10 +57,8 @@ export async function PATCH(request: Request, { params }: Params) {
     change_summary?: string
   }
 
-  const service = await createServiceClient()
-
   // 현재 문서 조회
-  const { data: existing } = await service
+  const { data: existing } = await supabase
     .from('managed_documents')
     .select('id, hospital_id, status, version_number, title, content')
     .eq('id', docId)
@@ -110,7 +107,7 @@ export async function PATCH(request: Request, { params }: Params) {
   }
   if (isContentChange) updatePayload.version_number = newVersion
 
-  const { data: updated, error } = await service
+  const { data: updated, error } = await supabase
     .from('managed_documents')
     .update(updatePayload)
     .eq('id', docId)
@@ -121,7 +118,7 @@ export async function PATCH(request: Request, { params }: Params) {
 
   // 버전 스냅샷 저장 (내용 변경 또는 상태 변경 시)
   if (isContentChange || body.status) {
-    await service.from('managed_document_versions').insert({
+    await supabase.from('managed_document_versions').insert({
       document_id:    docId,
       hospital_id:    existing.hospital_id,
       version_number: newVersion,
@@ -134,7 +131,7 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   // 감사 로그
-  await service.from('audit_logs').insert({
+  await supabase.from('audit_logs').insert({
     user_id:       user.id,
     hospital_id:   existing.hospital_id,
     action:        body.status ? `managed_doc.status.${body.status}` : 'managed_doc.update',
@@ -152,8 +149,7 @@ export async function DELETE(_req: Request, { params }: Params) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })
 
-  const service = await createServiceClient()
-  const { data: existing } = await service
+  const { data: existing } = await supabase
     .from('managed_documents')
     .select('id, hospital_id, status')
     .eq('id', docId)
@@ -175,10 +171,10 @@ export async function DELETE(_req: Request, { params }: Params) {
     return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
   }
 
-  const { error } = await service.from('managed_documents').delete().eq('id', docId)
+  const { error } = await supabase.from('managed_documents').delete().eq('id', docId)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  await service.from('audit_logs').insert({
+  await supabase.from('audit_logs').insert({
     user_id:       user.id,
     hospital_id:   existing.hospital_id,
     action:        'managed_doc.delete',

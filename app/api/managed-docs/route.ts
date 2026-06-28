@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import type { ManagedDocType } from '@/types/database.types'
 
 export async function GET(request: Request) {
@@ -24,8 +24,7 @@ export async function GET(request: Request) {
     .maybeSingle()
   if (!member) return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
 
-  const service = await createServiceClient()
-  let q = service
+  let q = supabase
     .from('managed_documents')
     .select(`
       *,
@@ -75,8 +74,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
   }
 
-  const service = await createServiceClient()
-  const { data, error } = await service
+  const { data, error } = await supabase
     .from('managed_documents')
     .insert({
       hospital_id:     hospitalId,
@@ -96,7 +94,7 @@ export async function POST(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // 감사 로그 기록
-  await service.from('audit_logs').insert({
+  await supabase.from('audit_logs').insert({
     user_id:       user.id,
     hospital_id:   hospitalId,
     action:        'managed_doc.create',
@@ -106,7 +104,7 @@ export async function POST(request: Request) {
   })
 
   // 초기 버전 스냅샷 저장
-  await service.from('managed_document_versions').insert({
+  await supabase.from('managed_document_versions').insert({
     document_id:    data.id,
     hospital_id:    hospitalId,
     version_number: 1,
