@@ -1,19 +1,8 @@
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 const PROTECTED_PREFIXES = ['/dashboard', '/hospitals', '/settings', '/admin']
 const AUTH_PATHS = ['/login', '/register', '/forgot-password']
-const API_PREFIXES = ['/api/']
-
-const PROJECT_REF = 'johapmesoehvsjzxdwrw'
-
-function getSession(request: NextRequest): boolean {
-  const cookieNames = [
-    `sb-${PROJECT_REF}-auth-token`,
-    `sb-${PROJECT_REF}-auth-token.0`,
-    `sb-${PROJECT_REF}-auth-token.1`,
-  ]
-  return cookieNames.some((name) => !!request.cookies.get(name))
-}
 
 const CSP = [
   "default-src 'self'",
@@ -34,32 +23,51 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 }
 
 export async function middleware(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({ request })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return request.cookies.getAll() },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({ request })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+
+  // 세션 갱신 — 이 호출 없으면 auth.uid()가 DB RLS에서 NULL
+  const { data: { user } } = await supabase.auth.getUser()
+
   const { pathname } = request.nextUrl
+  const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p))
+  const isAuthPath  = AUTH_PATHS.some((p) => pathname.startsWith(p))
 
-  const isApiRoute   = API_PREFIXES.some((p)  => pathname.startsWith(p))
-  const isProtected  = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p))
-  const isAuthPath   = AUTH_PATHS.some((p)        => pathname.startsWith(p))
-
-  if (!isProtected && !isAuthPath && !isApiRoute) {
-    return addSecurityHeaders(NextResponse.next())
-  }
-
-  const hasSession = getSession(request)
-
-  if (!hasSession && isProtected) {
+  if (!user && isProtected) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirectTo', pathname)
-    return addSecurityHeaders(NextResponse.redirect(url))
+    const redirect = NextResponse.redirect(url)
+    addSecurityHeaders(redirect)
+    return redirect
   }
 
-  if (hasSession && isAuthPath) {
+  if (user && isAuthPath) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
-    return addSecurityHeaders(NextResponse.redirect(url))
+    const redirect = NextResponse.redirect(url)
+    addSecurityHeaders(redirect)
+    return redirect
   }
 
-  return addSecurityHeaders(NextResponse.next())
+  addSecurityHeaders(supabaseResponse)
+  return supabaseResponse
 }
 
 export const config = {
