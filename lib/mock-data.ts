@@ -28,9 +28,9 @@ export const mockEducationCourses: EducationCourse[] = [
 ];
 
 export const mockNotices = [
-  { id: '1', title: '2026년 요양병원 현지조사 계획 안내', source: 'nts' as const, publishedAt: '2026-06-15', url: '#', isNew: true },
-  { id: '2', title: '의료기관 인증 신청 접수 안내 (하반기)', source: 'mss' as const, publishedAt: '2026-06-10', url: '#', isNew: true },
-  { id: '3', title: '요양병원 입원급여 적정성 평가 결과 공개', source: 'bizinfo' as const, publishedAt: '2026-06-05', url: '#', isNew: false },
-  { id: '4', title: '감염병 예방 지침 개정 안내', source: 'mss' as const, publishedAt: '2026-05-28', url: '#', isNew: false },
-  { id: '5', title: '경기도 의료기관 지원사업 공고', source: 'gsp' as const, publishedAt: '2026-05-20', url: '#', isNew: false },
+  { id: '1', title: '2026년 요양병원 현지조사 계획 안내', source: 'nts' as const, publishedAt: '2026-06-15', url: '#', isNew: true, urgency: 'high', content: '', targetHospitalTypes: ['nursing'] },
+  { id: '2', title: '의료기관 인증 신청 접수 안내 (하반기)', source: 'mss' as const, publishedAt: '2026-06-10', url: '#', isNew: true, urgency: 'medium', content: '', targetHospitalTypes: [] },
+  { id: '3', title: '요양병원 입원급여 적정성 평가 결과 공개', source: 'bizinfo' as const, publishedAt: '2026-06-05', url: '#', isNew: false, urgency: 'low', content: '', targetHospitalTypes: ['nursing'] },
+  { id: '4', title: '감염병 예방 지침 개정 안내', source: 'mss' as const, publishedAt: '2026-05-28', url: '#', isNew: false, urgency: 'medium', content: '', targetHospitalTypes: [] },
+  { id: '5', title: '경기도 의료기관 지원사업 공고', source: 'gsp' as const, publishedAt: '2026-05-20', url: '#', isNew: false, urgency: 'low', content: '', targetHospitalTypes: [] },
 ];

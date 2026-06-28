@@ -146,7 +146,7 @@ const mockQpicResources: QpicResource[] = [
 
 // 리소스 타입 아이콘
 function ResourceTypeIcon({ type }: { type: QpicResourceType }) {
-  const icons: Record<QpicResourceType, React.ReactNode> = {
+  const icons: Record<string, React.ReactNode> = {
     law: <Scale size={14} />,
     guideline: <BookOpen size={14} />,
     form: <FileText size={14} />,
@@ -158,7 +158,7 @@ function ResourceTypeIcon({ type }: { type: QpicResourceType }) {
 
 // 리소스 카드
 function ResourceCard({ resource }: { resource: QpicResource }) {
-  const typeColors: Record<QpicResourceType, string> = {
+  const typeColors: Record<string, string> = {
     law: 'bg-purple-50 text-purple-700 border-purple-200',
     guideline: 'bg-blue-50 text-blue-700 border-blue-200',
     form: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -249,13 +249,13 @@ function QpicSection({
 export default function QpicPage() {
   const sections: QpicSection[] = ['qps', 'infection', 'adequacy'];
 
-  const sectionIcons: Record<QpicSection, React.ReactNode> = {
+  const sectionIcons: Record<string, React.ReactNode> = {
     qps: <ShieldPlus size={16} />,
     infection: <Activity size={16} />,
     adequacy: <FileText size={16} />,
   };
 
-  const sectionColors: Record<QpicSection, string> = {
+  const sectionColors: Record<string, string> = {
     qps: 'text-blue-600',
     infection: 'text-teal-600',
     adequacy: 'text-purple-600',
@@ -320,3 +320,4 @@ export default function QpicPage() {
     </div>
   );
 }
+

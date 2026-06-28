@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 function getCategoryColor(category: EducationCategory): string {
-  const colorMap: Record<EducationCategory, string> = {
+  const colorMap: Record<string, string> = {
     mandatory: 'bg-red-100 text-red-700',
     certification: 'bg-blue-100 text-blue-700',
     infection: 'bg-teal-100 text-teal-700',

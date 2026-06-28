@@ -70,13 +70,14 @@ export async function getAllUsers(): Promise<(Profile & { email: string })[]> {
 
   if (error || !profiles) return []
 
-  const { data: { users } } = await supabase.auth.admin.listUsers()
-  const emailMap = new Map(users.map((u) => [u.id, u.email ?? '']))
+  const { data: adminData } = await (supabase.auth.admin.listUsers() as any)
+  const users = adminData?.users ?? []
+  const emailMap = new Map(users.map((u: any) => [u.id, u.email ?? '']))
 
   return (profiles as unknown as Profile[]).map((p) => ({
     ...p,
     email: emailMap.get(p.id) ?? '',
-  }))
+  })) as (Profile & { email: string })[]
 }
 
 export async function getHospitalWithMembers(hospitalId: string) {

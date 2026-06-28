@@ -36,7 +36,7 @@ export async function loginAction(
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword(parsed.data)
+  const { error } = await supabase.auth.signInWithPassword(parsed.data as any)
 
   if (error) {
     return {

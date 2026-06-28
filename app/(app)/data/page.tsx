@@ -94,9 +94,9 @@ export default function DataPortalPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {dataItems.map((item) => {
           // Mock 메타 (실제 연동 시 Supabase + API에서 가져옴)
-          const meta = item.type === 'hospital_codes' || item.type === 'evaluation_scores'
+          const meta = (item.type === 'hospital_codes' || item.type === 'evaluation_scores'
             ? mockPublicDataMeta[item.type as keyof typeof mockPublicDataMeta]
-            : null;
+            : null) as any;
 
           return (
             <Link
@@ -125,7 +125,7 @@ export default function DataPortalPage() {
                       <span>·</span>
                       <span>기준일: {meta.referenceDate || '확인 필요'}</span>
                       <span>·</span>
-                      <span>업데이트: {formatDate(meta.lastUpdated, 'MM.dd HH:mm')}</span>
+                      <span>업데이트: {formatDate(meta.lastUpdated)}</span>
                     </div>
                   ) : (
                     <div className="data-source">

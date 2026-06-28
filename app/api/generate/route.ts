@@ -1,17 +1,6 @@
 import { NextResponse } from 'next/server';
 
-export async function POST(request: Request) {
-  try {
-    const { hospitalType, hospitalName, documentType, documentTitle, additionalContext } = await request.json();
-
-    if (!hospitalName || !documentTitle) {
-      return NextResponse.json({ error: '필수 필드가 누락되었습니다.' }, { status: 400 });
-    }
-
-    const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY;
-
-    // Mock 문서 생성 Fallback 함수
-    const getMockResponse = () => {
+function getMockResponse(hospitalType: string, hospitalName: string, documentType: string, documentTitle: string) {
       const hospitalTypeLabels: Record<string, string> = {
         nursing: '요양병원',
         psychiatric: '정신병원',
@@ -73,14 +62,24 @@ export async function POST(request: Request) {
 
 *이 문서는 지능형 시스템이 생성한 초안으로, 병원의 실제 상황에 맞게 수정 후 사용하세요.*
 *버전: v1.0-Smart-Mock | 생성 모드: Fallback*`;
-    };
+}
+
+export async function POST(request: Request) {
+  try {
+    const { hospitalType, hospitalName, documentType, documentTitle, additionalContext } = await request.json();
+
+    if (!hospitalName || !documentTitle) {
+      return NextResponse.json({ error: '필수 필드가 누락되었습니다.' }, { status: 400 });
+    }
+
+    const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY;
 
     // 1. API 키가 없거나 플레이스홀더인 경우 Mock Fallback 반환
     if (!apiKey || apiKey.includes('your-') || apiKey.includes('placeholder')) {
       // 인위적 로딩 지연
       await new Promise((r) => setTimeout(r, 1500));
       return NextResponse.json({
-        result: getMockResponse(),
+        result: getMockResponse(hospitalType, hospitalName, documentType, documentTitle),
         isMock: true,
       });
     }
@@ -188,7 +187,7 @@ export async function POST(request: Request) {
     console.error('문서 생성 오류:', error.message);
     const isQuota = error.message === 'QUOTA_EXCEEDED';
     return NextResponse.json({
-      result: getMockResponse(),
+      result: getMockResponse('', '', '', ''),
       isMock: true,
       userMessage: isQuota
         ? '현재 AI 서비스 사용량이 일시적으로 초과되어 기본 초안을 제공합니다. 잠시 후 다시 시도해주세요.'

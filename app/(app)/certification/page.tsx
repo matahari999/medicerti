@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 function StatusBadge({ status }: { status: CertificationStatus }) {
-  const configs: Record<CertificationStatus, { label: string; class: string; icon: React.ReactNode }> = {
+  const configs: Record<string, { label: string; class: string; icon: React.ReactNode }> = {
     not_started: {
       label: '미시작',
       class: 'badge-default',
@@ -115,12 +115,13 @@ function CategoryCard({
   );
 }
 
-interface PageProps {
-  searchParams?: { type?: string };
-}
-
-export default async function CertificationPage({ searchParams }: PageProps) {
-  const selectedType = searchParams?.type || 'nursing';
+export default async function CertificationPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ type?: string }>;
+}) {
+  const resolvedParams = await searchParams;
+  const selectedType = resolvedParams?.type || 'nursing';
   let isMock = true;
   let categoriesData: any[] = [];
   let todoItems: any[] = [];
