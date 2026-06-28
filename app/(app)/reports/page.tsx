@@ -135,7 +135,7 @@ export default function ReportsPage() {
 
   const processIncidents = (reports: any[]) => {
     // 1. 월별 데이터 집계 (최근 6개월)
-    const months = [];
+    const months: { key: string; label: string }[] = [];
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);

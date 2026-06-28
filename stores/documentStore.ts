@@ -2,30 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { DocumentType, CertificationStatus } from '@/types';
 
-// SHA-256 해시 함수 (Web Crypto API 및 Node.js fallback 적용)
-async function sha256(message: string): Promise<string> {
-  if (typeof window === 'undefined') {
-    // Node.js SSR 환경 대응
-    try {
-      const crypto = require('crypto');
-      return crypto.createHash('sha256').update(message).digest('hex');
-    } catch (e) {
-      return message; // 최악의 경우 raw 반환 방어
-    }
-  }
-  
-  // 브라우저 표준 Web Crypto API 환경
-  try {
-    const msgBuffer = new TextEncoder().encode(message);
-    const hashBuffer = await window.crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-  } catch (e) {
-    console.error('Web Crypto API 해시 실패:', e);
-    return message;
-  }
-}
-
 
 export interface ApprovalStep {
   role: string;
@@ -55,14 +31,7 @@ interface DocumentStore {
   pendingList: DocumentApproval[];
   sentList: DocumentApproval[];
   completedList: DocumentApproval[];
-  
-  // 관리자 권한 관련
-  isAdminUnlocked: boolean;
-  adminPassword: string;
-  unlockAdmin: (password: string) => Promise<boolean>;
-  lockAdmin: () => void;
-  changeAdminPassword: (oldPass: string, newPass: string) => Promise<boolean>;
-  
+
   // 신규 기안/상신 등록
   submitForApproval: (doc: {
     title: string;
@@ -248,34 +217,6 @@ export const useDocumentStore = create<DocumentStore>()(
       pendingList: initialPending,
       sentList: initialSent,
       completedList: initialCompleted,
-      
-      // 관리자 잠금 정보 (SHA-256 해시화 저장)
-      isAdminUnlocked: false,
-      adminPassword: '29d810aaba7f726e043a32f852c9882802b630430a7f48e21f9371675e8d7a06', // '101621'의 SHA-256 해시값
-      
-      unlockAdmin: async (password) => {
-        const hash = await sha256(password);
-        if (hash === get().adminPassword) {
-          set({ isAdminUnlocked: true });
-          return true;
-        }
-        return false;
-      },
-      
-      lockAdmin: () => {
-        set({ isAdminUnlocked: false });
-      },
-      
-      changeAdminPassword: async (oldPass, newPass) => {
-        const oldHash = await sha256(oldPass);
-        if (oldHash === get().adminPassword) {
-          const newHash = await sha256(newPass);
-          set({ adminPassword: newHash });
-          return true;
-        }
-        return false;
-      },
-
       
       submitForApproval: (doc) => 
         set((state) => {

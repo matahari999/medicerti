@@ -26,7 +26,7 @@ export async function GET(request: Request) {
           ? notice.title.includes(query) || notice.content.includes(query)
           : true;
         const matchType = typeFilter
-          ? notice.targetHospitalTypes === null || notice.targetHospitalTypes.includes(typeFilter as any)
+          ? !notice.targetHospitalTypes || (notice.targetHospitalTypes as string[]).includes(typeFilter)
           : true;
         return matchSource && matchQuery && matchType;
       });

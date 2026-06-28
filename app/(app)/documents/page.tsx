@@ -240,10 +240,10 @@ export default function DocumentsPage() {
   const filteredDocs = documents.filter((doc) => {
     const matchesSearch =
       doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.category.toLowerCase().includes(searchQuery.toLowerCase());
-    
+      (doc.category ?? '').toLowerCase().includes(searchQuery.toLowerCase());
+
     const matchesHospital =
-      !hospitalFilter || doc.hospitalTypes.includes(hospitalFilter as HospitalType);
+      !hospitalFilter || (doc.hospitalTypes ?? []).includes(hospitalFilter as HospitalType);
     
     const matchesType = !typeFilter || doc.type === typeFilter;
 
@@ -369,7 +369,7 @@ export default function DocumentsPage() {
               )}
 
               <div className="flex items-center gap-1.5 flex-wrap mb-3">
-                {doc.hospitalTypes.map((type) => (
+                {(doc.hospitalTypes ?? []).map((type) => (
                   <span key={type} className="text-[10px] bg-slate-50 text-slate-600 border border-slate-100 rounded px-1.5 py-0.5 font-medium">
                     {HOSPITAL_TYPE_LABELS[type] || type}
                   </span>
@@ -383,7 +383,7 @@ export default function DocumentsPage() {
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock size={11} />
-                  {formatDate(doc.updatedAt, 'yyyy.MM.dd')}
+                  {doc.updatedAt ? formatDate(doc.updatedAt) : '-'}
                 </span>
               </div>
 
@@ -406,7 +406,7 @@ export default function DocumentsPage() {
 
               <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-slate-50 text-[10px] text-slate-400 uppercase font-bold">
                 <span>포맷:</span>
-                {doc.downloadFormats.map((fmt) => (
+                {(doc.downloadFormats ?? []).map((fmt) => (
                   <span key={fmt} className="bg-slate-100 px-1.5 rounded">
                     {fmt}
                   </span>

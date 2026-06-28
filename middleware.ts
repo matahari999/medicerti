@@ -15,8 +15,21 @@ function getSession(request: NextRequest): boolean {
   return cookieNames.some((name) => !!request.cookies.get(name))
 }
 
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: https:",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  "font-src 'self'",
+  "frame-ancestors 'none'",
+].join('; ')
+
 function addSecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set('Content-Security-Policy', CSP)
   return response
 }
 
