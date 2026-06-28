@@ -41,33 +41,22 @@ export async function createHospital(input: HospitalInput): Promise<Hospital> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('인증이 필요합니다')
 
-  const { data: hospital, error: hospitalError } = await supabase
-    .from('hospitals')
-    .insert({ ...input, created_by: user.id } as never)
-    .select()
-    .single()
+  // SECURITY DEFINER RPC — RLS 없이 서버 내부에서 병원+멤버 원자적 생성
+  const { data, error } = await supabase.rpc('create_hospital_with_admin', {
+    p_name:                 input.name,
+    p_license_number:       input.license_number ?? null,
+    p_type:                 input.type ?? 'long_term_care',
+    p_bed_count:            input.bed_count ?? null,
+    p_region:               input.region ?? null,
+    p_address:              input.address ?? null,
+    p_phone:                input.phone ?? null,
+    p_accreditation_cycle:  input.accreditation_cycle ?? 1,
+    p_accreditation_start:  input.accreditation_start ?? null,
+    p_accreditation_target: input.accreditation_target ?? null,
+  })
 
-  if (hospitalError) throw new Error(hospitalError.message)
-  const h = hospital as unknown as Hospital
-
-  // 병원 생성자 자기자신 추가 — RLS 정책(20260629000002)으로 허용됨
-  const { error: memberError } = await supabase
-    .from('hospital_members')
-    .insert({
-      hospital_id: h.id,
-      user_id:     user.id,
-      email:       user.email!,
-      role:        'admin',
-      status:      'active',
-      joined_at:   new Date().toISOString(),
-    } as never)
-
-  if (memberError) {
-    await supabase.from('hospitals').delete().eq('id', h.id)
-    throw new Error('멤버 추가 실패: ' + memberError.message)
-  }
-
-  return h
+  if (error) throw new Error(error.message)
+  return data as unknown as Hospital
 }
 
 export async function updateHospital(
