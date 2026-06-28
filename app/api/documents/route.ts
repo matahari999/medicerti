@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { MAX_FILE_SIZE_BYTES, ALLOWED_MIME_TYPES } from '@/lib/constants'
+import { MAX_FILE_SIZE_BYTES, PDF_MAGIC_BYTES } from '@/lib/constants'
 
 export async function GET(request: Request) {
   const supabase = await createClient()
@@ -47,13 +47,12 @@ export async function POST(request: Request) {
   const bytes = await file.arrayBuffer()
   const magic = new Uint8Array(bytes, 0, 4)
   const magicStr = new TextDecoder().decode(magic)
-  if (magicStr !== '%PDF') {
+  if (magicStr !== PDF_MAGIC_BYTES) {
     return NextResponse.json({ error: 'Invalid PDF file' }, { status: 415 })
   }
 
   const uuid = crypto.randomUUID()
-  const fileName = `${user.id}/${uuid}.pdf`
-  const storagePath = `documents/${hospitalId}/${fileName}`
+  const storagePath = `${hospitalId}/${user.id}/${uuid}.pdf`
 
   const { error: uploadError } = await supabase.storage
     .from('documents')

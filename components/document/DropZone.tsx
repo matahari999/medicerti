@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { Upload, File, X, Loader2, RotateCcw } from 'lucide-react'
 import { cn, formatFileSize } from '@/lib/utils'
 import { MAX_FILE_SIZE_BYTES, MAX_BATCH_UPLOAD } from '@/lib/constants'
@@ -15,11 +16,13 @@ interface UploadItem {
   id:      string
   name:    string
   size:    number
-  status:  'pending' | 'uploading' | 'success' | 'error'
+  file?:   File
+  status:  'pending' | 'uploading' | 'extracting' | 'success' | 'error'
   error?:  string
 }
 
 export function DropZone({ hospitalId, onUploadComplete }: DropZoneProps) {
+  const router = useRouter()
   const [items, setItems] = useState<UploadItem[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDragOver, setIsDragOver] = useState(false)
@@ -40,7 +43,7 @@ export function DropZone({ hospitalId, onUploadComplete }: DropZoneProps) {
         return { id: crypto.randomUUID(), name: f.name, size: f.size, status: 'error' as const, error: '중복 파일명' }
       }
       oldNames.add(f.name)
-      return { id: crypto.randomUUID(), name: f.name, size: f.size, status: 'pending' as const }
+      return { id: crypto.randomUUID(), name: f.name, size: f.size, file: f, status: 'pending' as const }
     })
 
     setItems((prev) => [...prev, ...newItems])
@@ -59,6 +62,8 @@ export function DropZone({ hospitalId, onUploadComplete }: DropZoneProps) {
     formData.append('file', file)
     formData.append('hospitalId', hospitalId)
 
+    let docId: string | null = null
+
     for (let attempt = 0; attempt <= 2; attempt++) {
       try {
         const res = await fetch('/api/documents', { method: 'POST', body: formData })
@@ -69,17 +74,32 @@ export function DropZone({ hospitalId, onUploadComplete }: DropZoneProps) {
           }
           throw new Error((err as { error?: string }).error || '업로드 실패')
         }
-        setItems((prev) => prev.map((it) => it.id === itemId ? { ...it, status: 'success' } : it))
-        onUploadComplete?.()
-        return
+        const json = await res.json() as { data: { id: string } }
+        docId = json.data.id
+        break
       } catch (err) {
         if (attempt < 2) {
           await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)))
           continue
         }
         setItems((prev) => prev.map((it) => it.id === itemId ? { ...it, status: 'error', error: err instanceof Error ? err.message : '업로드 실패' } : it))
+        return
       }
     }
+
+    if (!docId) return
+
+    // 업로드 성공 후 자동으로 OCR 추출 시작
+    setItems((prev) => prev.map((it) => it.id === itemId ? { ...it, status: 'extracting' } : it))
+    try {
+      await fetch(`/api/documents/${docId}/extract`, { method: 'POST' })
+    } catch {
+      // 추출 실패는 서버에서 처리 — 상태는 DB에 기록됨
+    }
+
+    setItems((prev) => prev.map((it) => it.id === itemId ? { ...it, status: 'success' } : it))
+    onUploadComplete?.()
+    router.refresh()
   }
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -94,14 +114,19 @@ export function DropZone({ hospitalId, onUploadComplete }: DropZoneProps) {
   }, [addFiles])
 
   const retryItem = (item: UploadItem) => {
+    if (!item.file) {
+      removeItem(item.id)
+      return
+    }
     setItems((prev) => prev.map((it) => it.id === item.id ? { ...it, status: 'pending', error: undefined } : it))
+    uploadFile(item.file, item.id)
   }
 
   const removeItem = (id: string) => {
     setItems((prev) => prev.filter((it) => it.id !== id))
   }
 
-  const uploadingCount = items.filter((it) => it.status === 'uploading').length
+  const uploadingCount = items.filter((it) => it.status === 'uploading' || it.status === 'extracting').length
   const successCount   = items.filter((it) => it.status === 'success').length
   const errorCount     = items.filter((it) => it.status === 'error').length
 
@@ -141,7 +166,16 @@ export function DropZone({ hospitalId, onUploadComplete }: DropZoneProps) {
                 <p className="text-xs text-muted-foreground">{formatFileSize(item.size)}</p>
               </div>
               {item.status === 'uploading' && (
-                <Loader2 className="w-4 h-4 text-brand-600 animate-spin shrink-0" />
+                <span className="flex items-center gap-1 text-xs text-brand-600 shrink-0">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  업로드 중
+                </span>
+              )}
+              {item.status === 'extracting' && (
+                <span className="flex items-center gap-1 text-xs text-amber-600 shrink-0">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  OCR 추출 중
+                </span>
               )}
               {item.status === 'success' && (
                 <span className="text-xs text-green-600 font-medium shrink-0">완료</span>
@@ -165,7 +199,7 @@ export function DropZone({ hospitalId, onUploadComplete }: DropZoneProps) {
             </div>
           ))}
           {uploadingCount > 0 && (
-            <p className="text-xs text-muted-foreground">{uploadingCount}개 업로드 중...</p>
+            <p className="text-xs text-muted-foreground">{uploadingCount}개 처리 중...</p>
           )}
           {successCount > 0 && (
             <p className="text-xs text-green-600">{successCount}개 업로드 완료{errorCount > 0 ? `, ${errorCount}개 실패` : ''}</p>

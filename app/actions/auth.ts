@@ -66,10 +66,14 @@ export async function registerAction(
   }
 
   const supabase = await createClient()
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3500'
   const { data, error } = await supabase.auth.signUp({
     email:    parsed.data.email,
     password: parsed.data.password,
-    options: { data: { full_name: parsed.data.full_name } },
+    options: {
+      data: { full_name: parsed.data.full_name },
+      emailRedirectTo: `${appUrl}/api/auth/callback`,
+    },
   })
 
   if (error) {

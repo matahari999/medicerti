@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Download, Loader2, FileText, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { formatDateTime } from '@/lib/utils'
 
 interface ReportsClientProps {
   hospitalId: string
@@ -27,10 +28,6 @@ export function ReportsClient({ hospitalId, reports, completedRuns }: ReportsCli
     } finally {
       setGeneratingId(null)
     }
-  }
-
-  function formatDateTime(d: string) {
-    return new Date(d).toLocaleString('ko-KR', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
   }
 
   return (

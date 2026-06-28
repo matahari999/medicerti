@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import {
   ChevronLeft, FileText, BarChart2, FileOutput,
-  Settings, Calendar, MapPin, Phone, Bed,
+  Settings, Calendar, MapPin, Phone, Bed, BookOpen, ClipboardList, FolderOpen,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -46,10 +46,12 @@ export default async function HospitalDetailPage({ params }: Props) {
   const score = latestAnalysis?.overall_score ?? null
 
   const quickLinks = [
-    { href: `/hospitals/${hospitalId}/documents`, label: '문서 관리', icon: FileText, desc: `${docStats.extracted}/${docStats.total}개 추출 완료`, badge: docStats.total },
-    { href: `/hospitals/${hospitalId}/analysis`,  label: '갭 분석',   icon: BarChart2, desc: latestAnalysis ? `마지막: ${formatDate(latestAnalysis.created_at)}` : '분석 전', badge: null },
-    { href: `/hospitals/${hospitalId}/reports`,   label: '보고서',    icon: FileOutput, desc: '분석 보고서 다운로드', badge: null },
-    { href: `/hospitals/${hospitalId}/settings`,  label: '설정',      icon: Settings, desc: '병원 정보 수정', badge: null },
+    { href: `/hospitals/${hospitalId}/documents`,    label: '문서 관리',  icon: FileText,      desc: `${docStats.extracted}/${docStats.total}개 추출 완료`, badge: docStats.total },
+    { href: `/hospitals/${hospitalId}/analysis`,     label: '갭 분석',    icon: BarChart2,     desc: latestAnalysis ? `마지막: ${formatDate(latestAnalysis.created_at)}` : '분석 전', badge: null },
+    { href: `/hospitals/${hospitalId}/criteria`,     label: '인증 기준',  icon: ClipboardList, desc: '기준별 적합도 열람', badge: null },
+    { href: `/hospitals/${hospitalId}/regulations`,  label: 'AI 규정집',  icon: BookOpen,      desc: 'AI 정책 초안 자동 생성', badge: null },
+    { href: `/hospitals/${hospitalId}/managed-docs`, label: '관리 문서',  icon: FolderOpen,    desc: '법정양식·점검표·회의록 등', badge: null },
+    { href: `/hospitals/${hospitalId}/reports`,      label: '보고서',     icon: FileOutput,    desc: '분석 보고서 다운로드', badge: null },
   ]
 
   return (
@@ -136,7 +138,7 @@ export default async function HospitalDetailPage({ params }: Props) {
       </div>
 
       {/* 빠른 이동 */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {quickLinks.map(({ href, label, icon: Icon, desc, badge }) => (
           <Link
             key={href}

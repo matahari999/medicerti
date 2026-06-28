@@ -1,23 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 
 type Params = { params: Promise<{ documentId: string }> }
 
 export async function POST(_req: Request, { params }: Params) {
   const { documentId } = await params
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll() },
-        setAll() {},
-      },
-    }
-  )
+  const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })
@@ -30,6 +18,16 @@ export async function POST(_req: Request, { params }: Params) {
 
   if (!doc) return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 })
   const document = doc as unknown as { status: string; storage_path: string; extraction_attempts: number; hospital_id: string }
+
+  const { data: member } = await supabase
+    .from('hospital_members')
+    .select('role')
+    .eq('hospital_id', document.hospital_id)
+    .eq('user_id', user.id)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  if (!member) return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
 
   if (document.status !== 'pending' && document.status !== 'failed') {
     return NextResponse.json({ error: `Cannot extract document with status: ${document.status}` }, { status: 409 })

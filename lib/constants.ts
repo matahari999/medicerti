@@ -90,3 +90,51 @@ export const ROLE_LABELS: Record<string, string> = {
 // PDF 허용 MIME 타입
 export const ALLOWED_MIME_TYPES = ['application/pdf'] as const
 export const PDF_MAGIC_BYTES = '%PDF'
+
+// ============================
+// 관리 문서 유형
+// ============================
+export const MANAGED_DOC_TYPE_LABELS = {
+  regulation:       '규정집',
+  criteria_book:    '기준집',
+  legal_form:       '법정양식',
+  checklist:        '점검표',
+  education_record: '교육기록',
+  meeting_minutes:  '회의록',
+  corrective_action:'시정조치서',
+} as const
+
+export const MANAGED_DOC_TYPE_ICONS: Record<string, string> = {
+  regulation:       '📋',
+  criteria_book:    '📚',
+  legal_form:       '📄',
+  checklist:        '✅',
+  education_record: '🎓',
+  meeting_minutes:  '📝',
+  corrective_action:'🔧',
+}
+
+// ============================
+// 관리 문서 상태
+// ============================
+export const MANAGED_DOC_STATUS_LABELS = {
+  draft:        '초안',
+  under_review: '검토중',
+  approved:     '승인완료',
+  archived:     '보관',
+} as const
+
+export const MANAGED_DOC_STATUS_COLORS = {
+  draft:        'bg-gray-100 text-gray-700 border-gray-200',
+  under_review: 'bg-amber-100 text-amber-800 border-amber-200',
+  approved:     'bg-green-100 text-green-800 border-green-200',
+  archived:     'bg-blue-100 text-blue-700 border-blue-200',
+} as const
+
+// 상태 전환 허용 맵: 현재 상태 → 이동 가능한 다음 상태들
+export const MANAGED_DOC_STATUS_TRANSITIONS: Record<string, string[]> = {
+  draft:        ['under_review'],
+  under_review: ['approved', 'draft'],
+  approved:     ['archived'],
+  archived:     [],
+} as const

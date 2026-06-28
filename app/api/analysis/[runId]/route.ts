@@ -1,22 +1,11 @@
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 
 type Params = { params: Promise<{ runId: string }> }
 
 export async function GET(_req: Request, { params }: Params) {
   const { runId } = await params
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll() },
-        setAll() {},
-      },
-    }
-  )
+  const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })
@@ -28,7 +17,17 @@ export async function GET(_req: Request, { params }: Params) {
     .single()
 
   if (!run) return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 })
-  const analysisRun = run as unknown as { status: string }
+  const analysisRun = run as unknown as { status: string; hospital_id: string }
+
+  const { data: member } = await supabase
+    .from('hospital_members')
+    .select('role')
+    .eq('hospital_id', analysisRun.hospital_id)
+    .eq('user_id', user.id)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  if (!member) return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
 
   const { data: results } = await supabase
     .from('criterion_results')

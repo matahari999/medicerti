@@ -28,12 +28,6 @@ export function formatScore(score: number | null | undefined): string {
   return `${score.toFixed(1)}%`
 }
 
-export function getScoreColor(score: number): string {
-  if (score >= 80) return 'text-green-600'
-  if (score >= 60) return 'text-amber-600'
-  return 'text-red-600'
-}
-
 export function getScoreBgColor(score: number): string {
   if (score >= 80) return 'bg-green-50 text-green-700 border-green-200'
   if (score >= 60) return 'bg-amber-50 text-amber-700 border-amber-200'
@@ -46,11 +40,6 @@ export function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export function truncate(str: string, maxLength: number): string {
-  if (str.length <= maxLength) return str
-  return str.slice(0, maxLength) + '…'
-}
-
 export function daysUntil(date: string | Date): number {
   const target = new Date(date)
   const now = new Date()
@@ -58,6 +47,3 @@ export function daysUntil(date: string | Date): number {
   return Math.ceil(diff / (1000 * 60 * 60 * 24))
 }
 
-export function sanitizeFilename(name: string): string {
-  return name.replace(/[^a-zA-Z0-9가-힣._-]/g, '_').slice(0, 255)
-}

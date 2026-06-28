@@ -81,14 +81,17 @@ export async function POST(request: Request) {
       return r.data as { id: string }
     })
 
-  processAnalysis(body.hospitalId, runData.id, extractedDocs.map((d) => d.id))
+  // supabase 클라이언트를 응답 전에 생성하여 request context 밖에서도 JWT가 유효하도록 전달
+  processAnalysis(supabase, body.hospitalId, runData.id)
 
   return NextResponse.json({ data: { runId: runData.id, status: 'queued' } }, { status: 202 })
 }
 
-async function processAnalysis(hospitalId: string, runId: string, _documentIds: string[]) {
-  const { createClient } = await import('@/lib/supabase/server')
-  const supabase = await createClient()
+async function processAnalysis(
+  supabase: Awaited<ReturnType<typeof import('@/lib/supabase/server').createClient>>,
+  hospitalId: string,
+  runId: string,
+) {
 
   try {
     await supabase.from('analysis_runs').update({ status: 'running', started_at: new Date().toISOString() } as never).eq('id', runId)

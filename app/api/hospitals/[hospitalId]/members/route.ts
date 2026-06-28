@@ -5,6 +5,12 @@ import { requireHospitalMember } from '@/lib/auth'
 
 type Params = { params: Promise<{ hospitalId: string }> }
 
+function errResponse(e: unknown) {
+  const message = e instanceof Error ? e.message : 'Internal Server Error'
+  const status  = message.includes('권한') ? 403 : message.includes('로그인') ? 401 : 500
+  return NextResponse.json({ error: message }, { status })
+}
+
 export async function GET(_req: NextRequest, { params }: Params) {
   const { hospitalId } = await params
 
@@ -23,9 +29,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
     return NextResponse.json({ data: data ?? [] })
   } catch (e) {
-    const message = e instanceof Error ? e.message : 'Internal Server Error'
-    const status  = message.includes('권한') ? 403 : message.includes('로그인') ? 401 : 500
-    return NextResponse.json({ error: message }, { status })
+    return errResponse(e)
   }
 }
 
@@ -69,9 +73,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     return NextResponse.json({ data }, { status: 201 })
   } catch (e) {
-    const message = e instanceof Error ? e.message : 'Internal Server Error'
-    const status  = message.includes('권한') ? 403 : message.includes('로그인') ? 401 : 500
-    return NextResponse.json({ error: message }, { status })
+    return errResponse(e)
   }
 }
 
@@ -97,8 +99,6 @@ export async function DELETE(req: NextRequest, { params }: Params) {
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    const message = e instanceof Error ? e.message : 'Internal Server Error'
-    const status  = message.includes('권한') ? 403 : message.includes('로그인') ? 401 : 500
-    return NextResponse.json({ error: message }, { status })
+    return errResponse(e)
   }
 }

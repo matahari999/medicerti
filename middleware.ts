@@ -7,12 +7,17 @@ const API_PREFIXES = ['/api/']
 const PROJECT_REF = 'oyivyltzugfzbozwxmew'
 
 function getSession(request: NextRequest): boolean {
-  // @supabase/ssr이 사용하는 쿠키 이름 패턴
   const cookieNames = [
     `sb-${PROJECT_REF}-auth-token`,
     `sb-${PROJECT_REF}-auth-token.0`,
+    `sb-${PROJECT_REF}-auth-token.1`,
   ]
   return cookieNames.some((name) => !!request.cookies.get(name))
+}
+
+function addSecurityHeaders(response: NextResponse): NextResponse {
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  return response
 }
 
 export async function middleware(request: NextRequest) {
@@ -23,7 +28,7 @@ export async function middleware(request: NextRequest) {
   const isAuthPath   = AUTH_PATHS.some((p)        => pathname.startsWith(p))
 
   if (!isProtected && !isAuthPath && !isApiRoute) {
-    return NextResponse.next()
+    return addSecurityHeaders(NextResponse.next())
   }
 
   const hasSession = getSession(request)
@@ -32,16 +37,16 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirectTo', pathname)
-    return NextResponse.redirect(url)
+    return addSecurityHeaders(NextResponse.redirect(url))
   }
 
   if (hasSession && isAuthPath) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+    return addSecurityHeaders(NextResponse.redirect(url))
   }
 
-  return NextResponse.next()
+  return addSecurityHeaders(NextResponse.next())
 }
 
 export const config = {

@@ -5,27 +5,25 @@ import { getHospital, updateHospital, deleteHospital } from '@/lib/services/hosp
 
 type Params = { params: Promise<{ hospitalId: string }> }
 
-async function getAuthedUser() {
+async function getAuthContext(hospitalId: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  return user
-}
+  if (!user) return { user: null, role: null }
 
-async function getMemberRole(hospitalId: string, userId: string) {
-  const supabase = await createClient()
   const { data } = await supabase
     .from('hospital_members')
     .select('role')
     .eq('hospital_id', hospitalId)
-    .eq('user_id', userId)
+    .eq('user_id', user.id)
     .eq('status', 'active')
     .maybeSingle()
-  return (data as { role: string } | null)?.role ?? null
+
+  return { user, role: (data as { role: string } | null)?.role ?? null }
 }
 
 export async function GET(_req: Request, { params }: Params) {
   const { hospitalId } = await params
-  const user = await getAuthedUser()
+  const { user } = await getAuthContext(hospitalId)
   if (!user) return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '인증이 필요합니다' } }, { status: 401 })
 
   const hospital = await getHospital(hospitalId)
@@ -36,10 +34,8 @@ export async function GET(_req: Request, { params }: Params) {
 
 export async function PATCH(request: Request, { params }: Params) {
   const { hospitalId } = await params
-  const user = await getAuthedUser()
+  const { user, role } = await getAuthContext(hospitalId)
   if (!user) return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '인증이 필요합니다' } }, { status: 401 })
-
-  const role = await getMemberRole(hospitalId, user.id)
   if (!role || role === 'viewer') return NextResponse.json({ error: { code: 'FORBIDDEN', message: '수정 권한이 없습니다' } }, { status: 403 })
 
   const body = await request.json().catch(() => null)
@@ -56,10 +52,8 @@ export async function PATCH(request: Request, { params }: Params) {
 
 export async function DELETE(_req: Request, { params }: Params) {
   const { hospitalId } = await params
-  const user = await getAuthedUser()
+  const { user, role } = await getAuthContext(hospitalId)
   if (!user) return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '인증이 필요합니다' } }, { status: 401 })
-
-  const role = await getMemberRole(hospitalId, user.id)
   if (role !== 'admin') return NextResponse.json({ error: { code: 'FORBIDDEN', message: '삭제 권한이 없습니다' } }, { status: 403 })
 
   try {

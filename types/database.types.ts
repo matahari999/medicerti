@@ -10,6 +10,15 @@ export type DocumentStatus = 'pending' | 'processing' | 'extracted' | 'failed' |
 export type AnalysisStatus = 'queued' | 'running' | 'complete' | 'failed'
 export type ComplianceStatus = 'compliant' | 'partial' | 'non_compliant' | 'not_reviewed'
 export type CriterionSeverity = 'critical' | 'major' | 'minor'
+export type ManagedDocType =
+  | 'regulation'
+  | 'criteria_book'
+  | 'legal_form'
+  | 'checklist'
+  | 'education_record'
+  | 'meeting_minutes'
+  | 'corrective_action'
+export type ManagedDocStatus = 'draft' | 'under_review' | 'approved' | 'archived'
 
 // ============================
 // Table Row Types
@@ -173,6 +182,44 @@ export interface AuditLog {
   user_agent: string | null
   created_at: string
 }
+
+export interface ManagedDocument {
+  id: string
+  hospital_id: string
+  doc_type: ManagedDocType
+  title: string
+  content: string
+  status: ManagedDocStatus
+  version_number: number
+  criterion_id: string | null
+  analysis_run_id: string | null
+  policy_draft_id: string | null
+  approved_by: string | null
+  approved_at: string | null
+  archived_at: string | null
+  created_by: string
+  updated_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ManagedDocumentVersion {
+  id: string
+  document_id: string
+  hospital_id: string
+  version_number: number
+  title: string
+  content: string
+  status: ManagedDocStatus
+  change_summary: string | null
+  created_by: string
+  created_at: string
+}
+
+export type ManagedDocumentInsert = Omit<ManagedDocument, 'id' | 'created_at' | 'updated_at'>
+export type ManagedDocumentUpdate = Partial<Pick<ManagedDocument,
+  'title' | 'content' | 'status' | 'version_number' | 'approved_by' | 'approved_at' | 'archived_at' | 'updated_by'
+>>
 
 // ============================
 // Insert Types

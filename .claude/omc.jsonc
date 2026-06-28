@@ -1,0 +1,9 @@
+{
+  // oh-my-claudecode autopilot 설정
+  "autopilot": {
+    "pauseAfterExpansion": false,   // Phase 0 후 확인 없이 바로 진행
+    "pauseAfterPlanning": false,    // Phase 1 후 확인 없이 바로 진행
+    "maxQaCycles": 5,
+    "maxValidationRounds": 3
+  }
+}

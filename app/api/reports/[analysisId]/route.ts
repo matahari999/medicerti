@@ -19,6 +19,16 @@ export async function POST(_req: Request, { params }: Params) {
 
   if (!runData) return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 })
 
+  const { data: member } = await supabase
+    .from('hospital_members')
+    .select('role')
+    .eq('hospital_id', runData.hospital_id as string)
+    .eq('user_id', user.id)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  if (!member) return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
+
   const reportData = await buildReportData(runData.hospital_id as string, analysisId)
   if (!reportData) return NextResponse.json({ error: 'Failed to build report' }, { status: 500 })
 

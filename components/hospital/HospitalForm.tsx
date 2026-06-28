@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +14,8 @@ import {
 import { REGIONS } from '@/lib/validators/hospital'
 import type { Hospital } from '@/types/database.types'
 import type { HospitalState } from '@/app/actions/hospital'
+import { HospitalSearchBox } from './HospitalSearchBox'
+import type { PublicHospital } from '@/app/api/public/hospitals/route'
 
 interface HospitalFormProps {
   action:    (prev: HospitalState | null, formData: FormData) => Promise<HospitalState>
@@ -32,10 +34,28 @@ export function HospitalForm({
   defaultValues,
   submitLabel = '저장',
 }: HospitalFormProps) {
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError]           = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]> | undefined>(undefined)
-  const [saved, setSaved] = useState(false)
-  const [pending, setPending] = useState(false)
+  const [saved, setSaved]           = useState(false)
+  const [pending, setPending]       = useState(false)
+  const [region, setRegion]         = useState<string>(defaultValues?.region ?? '')
+  const formRef                     = useRef<HTMLFormElement>(null)
+
+  // 공공데이터 검색으로 선택 시 폼 자동완성
+  const handlePublicSelect = (h: PublicHospital) => {
+    const form = formRef.current
+    if (!form) return
+    const set = (name: string, value: string) => {
+      const el = form.elements.namedItem(name) as HTMLInputElement | null
+      if (el) { el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })) }
+    }
+    set('name',           h.name)
+    set('license_number', h.licenseNumber)
+    set('address',        h.address)
+    set('phone',          h.phone)
+    if (h.bedCount) set('bed_count', String(h.bedCount))
+    if (h.region) setRegion(h.region)
+  }
 
   async function handleSubmit(formData: FormData) {
     setPending(true)
@@ -49,7 +69,7 @@ export function HospitalForm({
   }
 
   return (
-    <form action={handleSubmit} className="space-y-6">
+    <form ref={formRef} action={handleSubmit} className="space-y-6">
       {error != null && (
         <div className="bg-red-50 text-red-700 text-sm px-3 py-2.5 rounded-lg border border-red-200">
           {error}
@@ -61,6 +81,16 @@ export function HospitalForm({
           저장되었습니다
         </div>
       )}
+
+      {/* 공공데이터 검색 */}
+      <section className="space-y-2">
+        <h3 className="text-sm font-semibold text-gray-900 border-b pb-2 flex items-center gap-1.5">
+          공공데이터 자동완성
+          <span className="text-[10px] font-normal text-muted-foreground bg-gray-100 px-1.5 py-0.5 rounded">건강보험심사평가원</span>
+        </h3>
+        <p className="text-xs text-muted-foreground">병원명으로 검색하면 기본 정보를 자동으로 채웁니다</p>
+        <HospitalSearchBox onSelect={handlePublicSelect} />
+      </section>
 
       {/* 기본 정보 */}
       <section className="space-y-4">
@@ -107,7 +137,7 @@ export function HospitalForm({
 
           <div className="space-y-1.5">
             <Label htmlFor="region">지역 (시/도)</Label>
-            <Select name="region" defaultValue={defaultValues?.region ?? ''}>
+            <Select name="region" value={region} onValueChange={setRegion}>
               <SelectTrigger id="region">
                 <SelectValue placeholder="지역 선택" />
               </SelectTrigger>
