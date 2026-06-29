@@ -88,7 +88,55 @@ export function RegulationPdfUploader({ hospitalId, existing }: Props) {
           <File className="w-4 h-4 text-blue-600 shrink-0" />
           <span className="text-sm text-blue-800 truncate flex-1">{file.name}</span>
           <Button size="sm" onClick={upload}>업로드</Button>
-      {/* AI 분석 결과 */}
+        </div>
+      )}
+
+      {uploading && (
+        <div className="flex items-center gap-2 text-sm text-brand-600 p-3 bg-brand-50 rounded-lg">
+          <Loader2 className="w-4 h-4 animate-spin" /> 업로드 중...
+        </div>
+      )}
+
+      {result && (
+        <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm space-y-2">
+          <div className="flex items-center gap-2 text-green-700">
+            <CheckCircle className="w-4 h-4 shrink-0" />
+            <span className="font-medium">업로드 완료</span>
+          </div>
+          <Button size="sm" variant="outline" className="gap-1.5 text-violet-700 border-violet-300 hover:bg-violet-50" asChild>
+            <a href={`/hospitals/${hospitalId}/managed-docs`}>
+              <ExternalLink className="w-3.5 h-3.5" />
+              관리 문서에서 내용 편집하기
+            </a>
+          </Button>
+        </div>
+      )}
+
+      {error && (
+        <div className="flex items-start gap-2 text-sm text-red-700 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <XCircle className="w-4 h-4 mt-0.5 shrink-0" /> {error}
+        </div>
+      )}
+
+      <div className="space-y-1.5">
+        <p className="text-xs font-medium text-muted-foreground">업로드된 규정집 ({existing.length}건)</p>
+        {existing.map((doc) => (
+          <div key={doc.id} className="flex items-center gap-3 p-3 bg-white border rounded-lg text-sm">
+            <FileText className="w-4 h-4 text-gray-400 shrink-0" />
+            <span className="truncate flex-1">{doc.original_name}</span>
+            <span className="text-xs text-muted-foreground shrink-0">{new Date(doc.created_at).toLocaleDateString('ko-KR')}</span>
+            <Button size="sm" variant="outline" className="gap-1.5 shrink-0" onClick={() => analyzeRegulation(doc.id)} disabled={analyzingId === doc.id}>
+              {analyzingId === doc.id ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Sparkles className="w-3 h-3" />
+              )}
+              AI 분석
+            </Button>
+          </div>
+        ))}
+      </div>
+
       {Object.entries(analyzeResults).length > 0 && (
         <div className="space-y-2">
           {Object.entries(analyzeResults).map(([id, ar]) => (
