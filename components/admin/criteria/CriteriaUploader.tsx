@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Upload, File, Download, Loader2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
+import { Upload, File, Download, Loader2, CheckCircle, XCircle, AlertTriangle, Sparkles, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -16,6 +16,8 @@ export function CriteriaUploader() {
   const [uploading, setUploading] = useState(false)
   const [result, setResult] = useState<UploadResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [analyzeResult, setAnalyzeResult] = useState<{ summary: string; created: number; total: number; createdDocs: Array<{ title: string; docType: string; id: string }> } | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleFile = (f: File) => {
@@ -57,6 +59,21 @@ export function CriteriaUploader() {
       setError(e.message ?? '업로드 실패')
     } finally {
       setUploading(false)
+    }
+  }
+
+  const analyzeCriteria = async () => {
+    setAnalyzing(true)
+    setAnalyzeResult(null)
+    try {
+      const res = await fetch('/api/admin/criteria/analyze', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
+      setAnalyzeResult(data)
+    } catch (e: any) {
+      setError(e.message ?? 'AI 분석 실패')
+    } finally {
+      setAnalyzing(false)
     }
   }
 
@@ -120,6 +137,48 @@ export function CriteriaUploader() {
             <div className="flex items-start gap-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
               <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
               <div>{result.errors.length}개 경고: {result.errors.slice(0, 5).join(', ')}{result.errors.length > 5 ? ` 외 ${result.errors.length - 5}건` : ''}</div>
+            </div>
+          )}
+
+          {/* AI 분석 버튼 */}
+          <div className="pt-2 border-t border-green-200">
+            <Button
+              size="sm"
+              className="bg-violet-600 hover:bg-violet-700 gap-2"
+              onClick={analyzeCriteria}
+              disabled={analyzing}
+            >
+              {analyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              {analyzing ? 'AI 분석 중...' : 'AI 분석하여 필요 문서 자동 생성'}
+            </Button>
+          </div>
+
+          {analyzeResult && (
+            <div className="p-3 bg-violet-50 border border-violet-200 rounded-lg text-sm space-y-2">
+              <div className="flex items-center gap-2 font-medium text-violet-800">
+                <Sparkles className="w-4 h-4" />
+                AI 분석 완료
+              </div>
+              <p className="text-violet-700">{analyzeResult.summary}</p>
+              <p className="text-violet-700">
+                총 {analyzeResult.total}개 문서 필요 → {analyzeResult.created}개 초안 생성됨
+              </p>
+              {analyzeResult.createdDocs.length > 0 && (
+                <div className="space-y-1 max-h-40 overflow-y-auto">
+                  {analyzeResult.createdDocs.map((d) => (
+                    <div key={d.id} className="flex items-center gap-2 text-xs text-violet-600 bg-white rounded px-2 py-1">
+                      <span className="font-medium">{d.docType}</span>
+                      <span>{d.title}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Button variant="outline" size="sm" asChild className="gap-1.5">
+                <a href="/admin/hospitals">
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  생성된 문서 확인하러 가기
+                </a>
+              </Button>
             </div>
           )}
         </div>

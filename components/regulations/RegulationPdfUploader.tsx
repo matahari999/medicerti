@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Upload, File, Loader2, CheckCircle, XCircle, FileText } from 'lucide-react'
+import { Upload, File, Loader2, CheckCircle, XCircle, FileText, Sparkles, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn, formatFileSize } from '@/lib/utils'
 
@@ -21,6 +21,8 @@ export function RegulationPdfUploader({ hospitalId, existing }: Props) {
   const [uploading, setUploading] = useState(false)
   const [result, setResult] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [analyzingId, setAnalyzingId] = useState<string | null>(null)
+  const [analyzeResults, setAnalyzeResults] = useState<Record<string, { summary: string; created: number }>>({})
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleFile = (f: File) => {
@@ -43,6 +45,24 @@ export function RegulationPdfUploader({ hospitalId, existing }: Props) {
     } catch (e: any) {
       setError(e.message)
     } finally { setUploading(false) }
+  }
+
+  const analyzeRegulation = async (regulationId: string) => {
+    setAnalyzingId(regulationId)
+    try {
+      const res = await fetch('/api/hospitals/regulations/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ regulationId, hospitalId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? '분석 실패')
+      setAnalyzeResults((prev) => ({ ...prev, [regulationId]: { summary: data.summary, created: data.created } }))
+    } catch (e: any) {
+      setError(e.message ?? 'AI 분석 실패')
+    } finally {
+      setAnalyzingId(null)
+    }
   }
 
   return (
@@ -68,37 +88,23 @@ export function RegulationPdfUploader({ hospitalId, existing }: Props) {
           <File className="w-4 h-4 text-blue-600 shrink-0" />
           <span className="text-sm text-blue-800 truncate flex-1">{file.name}</span>
           <Button size="sm" onClick={upload}>업로드</Button>
-        </div>
-      )}
-
-      {uploading && (
-        <div className="flex items-center gap-2 text-sm text-brand-600 p-3 bg-brand-50 rounded-lg">
-          <Loader2 className="w-4 h-4 animate-spin" /> 업로드 중...
-        </div>
-      )}
-
-      {result && (
-        <div className="flex items-center gap-2 text-sm text-green-700 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <CheckCircle className="w-4 h-4 shrink-0" /> {result}
-        </div>
-      )}
-
-      {error && (
-        <div className="flex items-start gap-2 text-sm text-red-700 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <XCircle className="w-4 h-4 mt-0.5 shrink-0" /> {error}
-        </div>
-      )}
-
-      {/* 기존 업로드 목록 */}
-      {existing.length > 0 && (
-        <div className="space-y-1.5">
-          <p className="text-xs font-medium text-muted-foreground">업로드된 규정집 ({existing.length}건)</p>
-          {existing.map((doc) => (
-            <div key={doc.id} className="flex items-center gap-3 p-3 bg-white border rounded-lg text-sm">
-              <FileText className="w-4 h-4 text-gray-400 shrink-0" />
-              <span className="truncate flex-1">{doc.original_name}</span>
-              <span className="text-xs text-muted-foreground shrink-0">{formatFileSize(doc.file_size_bytes)}</span>
-              <span className="text-xs text-muted-foreground shrink-0">{new Date(doc.created_at).toLocaleDateString('ko-KR')}</span>
+      {/* AI 분석 결과 */}
+      {Object.entries(analyzeResults).length > 0 && (
+        <div className="space-y-2">
+          {Object.entries(analyzeResults).map(([id, ar]) => (
+            <div key={id} className="p-3 bg-violet-50 border border-violet-200 rounded-lg text-sm">
+              <div className="flex items-center gap-2 font-medium text-violet-800 mb-1">
+                <Sparkles className="w-4 h-4" />
+                AI 분석 완료
+              </div>
+              <p className="text-violet-700 text-xs mb-1">{ar.summary}</p>
+              <p className="text-violet-700 text-xs font-medium">{ar.created}개 초안 문서 생성됨</p>
+              <Button variant="outline" size="sm" className="mt-2 gap-1.5" asChild>
+                <a href={`/hospitals/${hospitalId}/managed-docs`}>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  생성된 문서 보기
+                </a>
+              </Button>
             </div>
           ))}
         </div>
