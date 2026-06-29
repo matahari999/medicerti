@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ChevronLeft, BookOpen, Upload } from 'lucide-react'
+import { ChevronLeft, BookOpen, Upload, Sparkles } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getHospital } from '@/lib/services/hospital.service'
 import { requireHospitalMember } from '@/lib/auth'
 import { EmptyState } from '@/components/ui/empty-state'
 import { RegulationPdfUploader } from '@/components/regulations/RegulationPdfUploader'
+import { RegulationBatchGenerator } from '@/components/regulations/RegulationBatchGenerator'
 import { RegulationsClient } from './RegulationsClient'
 
 type Props = { params: Promise<{ hospitalId: string }> }
@@ -88,6 +89,15 @@ export default async function RegulationsPage({ params }: Props) {
           규정집 PDF 업로드
         </h2>
         <RegulationPdfUploader hospitalId={hospitalId} existing={existingDocs} />
+      </div>
+
+      {/* AI 규정집 상세 생성 섹션 */}
+      <div className="bg-white rounded-xl border p-6 space-y-3">
+        <h2 className="text-base font-semibold flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-violet-600" />
+          AI 규정집 상세 자동 생성
+        </h2>
+        <RegulationBatchGenerator hospitalId={hospitalId} hospitalName={hospital.name} />
       </div>
 
       {/* AI 정책 초안 생성 섹션 */}
