@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Printer } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { PrintButton } from './_print-button'
 
 export const metadata: Metadata = { title: '교육 이수증' }
 
@@ -37,10 +36,7 @@ export default async function CertificatePage({
       `}</style>
 
       <div className="no-print flex justify-end mb-4">
-        <Button variant="outline" onClick={() => window.print()}>
-          <Printer className="w-4 h-4 mr-1.5" />
-          PDF 출력
-        </Button>
+        <PrintButton />
       </div>
 
       <div className="bg-white border-2 border-brand-600 rounded-2xl p-10 text-center relative overflow-hidden">

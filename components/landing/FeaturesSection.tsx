@@ -1,12 +1,8 @@
-'use client'
-
-import { useState, useEffect, useRef } from 'react'
-
 const features = [
   {
     id: 'structure',
     title: '인증 기준 자동 구조화',
-    desc: '5단계 계층(영역→장→기준→범주→조사항목)을 자동으로 정리하고 병원 종별(요양·급성기·정신·치한방)에 맞게 분기합니다. 검색으로 원하는 기준을 즉시 찾을 수 있습니다.',
+    desc: '5단계 계층(영역→장→기준→범주→조사항목)을 자동으로 정리하고 병원 종별(요양·급성기·정신·치과·한방)에 맞게 분기합니다. 검색으로 원하는 기준을 즉시 찾을 수 있습니다.',
     gradient: 'from-[#0d9488] to-[#14b8a6]',
     mockup: (
       <div className="space-y-2 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">

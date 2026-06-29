@@ -50,7 +50,7 @@ export default async function PrintReportPage({ params }: Props) {
       </head>
       <body>
         <div className="no-print" style={{ textAlign: 'center', marginBottom: '1rem' }}>
-          <button onClick={() => window.print()} style={{
+          <button id="print-btn" style={{
             padding: '0.5rem 1.5rem', background: '#0d9488', color: 'white',
             border: 'none', borderRadius: '0.375rem', cursor: 'pointer', fontSize: '10pt'
           }}>
@@ -172,7 +172,8 @@ export default async function PrintReportPage({ params }: Props) {
 
         <script dangerouslySetInnerHTML={{ __html: `
           window.onload = function() {
-            document.title = '${reportData.hospitalName.replace(/'/g, "\\'")} - 인증 갭 분석 보고서'
+            document.title = '${reportData.hospitalName.replace(/'/g, "\\'")} - 인증 갭 분석 보고서';
+            document.getElementById('print-btn').onclick = function() { window.print(); };
           }
         `}} />
       </body>
