@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getAccreditationTree } from '@/lib/services/criteria.service'
 import AccreditationTreeView from '@/components/criteria/AccreditationTreeView'
 import { EmptyState } from '@/components/ui/empty-state'
