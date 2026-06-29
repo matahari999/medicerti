@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import {
   ChevronLeft, FileText, BarChart2, FileOutput,
   Settings, Calendar, MapPin, Phone, Bed, BookOpen, ClipboardList, FolderOpen,
+  ClipboardCheck, TrendingUp, FileCheck, BarChart3, GitBranch,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -46,12 +47,18 @@ export default async function HospitalDetailPage({ params }: Props) {
   const score = latestAnalysis?.overall_score ?? null
 
   const quickLinks = [
-    { href: `/hospitals/${hospitalId}/documents`,    label: '문서 관리',  icon: FileText,      desc: `${docStats.extracted}/${docStats.total}개 추출 완료`, badge: docStats.total },
-    { href: `/hospitals/${hospitalId}/analysis`,     label: '갭 분석',    icon: BarChart2,     desc: latestAnalysis ? `마지막: ${formatDate(latestAnalysis.created_at)}` : '분석 전', badge: null },
-    { href: `/hospitals/${hospitalId}/criteria`,     label: '인증 기준',  icon: ClipboardList, desc: '기준별 적합도 열람', badge: null },
-    { href: `/hospitals/${hospitalId}/regulations`,  label: 'AI 규정집',  icon: BookOpen,      desc: 'AI 정책 초안 자동 생성', badge: null },
-    { href: `/hospitals/${hospitalId}/managed-docs`, label: '관리 문서',  icon: FolderOpen,    desc: '법정양식·점검표·회의록 등', badge: null },
-    { href: `/hospitals/${hospitalId}/reports`,      label: '보고서',     icon: FileOutput,    desc: '분석 보고서 다운로드', badge: null },
+    { href: `/hospitals/${hospitalId}/documents`,       label: '문서 관리',     icon: FileText,      desc: `${docStats.extracted}/${docStats.total}개 추출 완료`, badge: docStats.total },
+    { href: `/hospitals/${hospitalId}/analysis`,        label: '갭 분석',       icon: BarChart2,     desc: latestAnalysis ? `마지막: ${formatDate(latestAnalysis.created_at)}` : '분석 전', badge: null },
+    { href: `/hospitals/${hospitalId}/self-assessment`, label: '자가 갭분석',    icon: ClipboardCheck, desc: 'ME 항목별 충족도 체크 + 우선순위', badge: null },
+    { href: `/hospitals/${hospitalId}/kpi`,             label: 'KPI 대시보드',   icon: BarChart3,    desc: '핵심 지표 통합 조회', badge: null },
+    { href: `/hospitals/${hospitalId}/rounding`,        label: '라운딩/모의조사', icon: TrendingUp,  desc: '월별 점검 + 추세 그래프', badge: null },
+  { href: `/hospitals/${hospitalId}/preparation`,     label: '인증 준비 위자드', icon: ClipboardList, desc: '단계별 체크리스트 가이드', badge: null },
+    { href: `/hospitals/${hospitalId}/criteria`,        label: '인증 기준',     icon: ClipboardList, desc: '기준별 적합도 열람', badge: null },
+    { href: `/hospitals/${hospitalId}/regulations`,     label: 'AI 규정집',     icon: BookOpen,      desc: 'AI 정책 초안 자동 생성', badge: null },
+    { href: `/hospitals/${hospitalId}/managed-docs`,    label: '관리 문서',     icon: FolderOpen,    desc: '법정양식·점검표·회의록 등', badge: null },
+    { href: `/hospitals/${hospitalId}/acknowledgments`, label: '인지 확인 로그',  icon: FileCheck,    desc: '직원 규정 인지 증빙', badge: null },
+    { href: `/hospitals/${hospitalId}/cross-mapping`,   label: '교차 매핑',     icon: GitBranch,    desc: '타 평가체계 중복 항목', badge: null },
+    { href: `/hospitals/${hospitalId}/reports`,         label: '보고서',        icon: FileOutput,   desc: '분석 보고서 다운로드', badge: null },
   ]
 
   return (

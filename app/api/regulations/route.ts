@@ -76,6 +76,7 @@ async function generateDrafts(
   gaps: unknown[],
 ) {
   const { generatePolicyDraft } = await import('@/lib/gemini/regulations')
+  const { retrieveRelatedCriteria, retrieveSelfAssessmentContext } = await import('@/lib/rag')
 
   for (const gap of gaps) {
     const g = gap as Record<string, unknown>
@@ -83,6 +84,12 @@ async function generateDrafts(
     if (!crit) continue
 
     try {
+      const [criteriaRag, selfAssessmentRag] = await Promise.all([
+        retrieveRelatedCriteria(crit.code as string, ''),
+        retrieveSelfAssessmentContext(hospitalId, crit.title as string),
+      ])
+      const ragContext = [criteriaRag, selfAssessmentRag].filter(Boolean).join('\n\n')
+
       const draft = await generatePolicyDraft({
         criterionCode:    crit.code as string,
         criterionTitle:   crit.title as string,
@@ -92,6 +99,7 @@ async function generateDrafts(
         recommendation:   g.recommendation as string | null,
         complianceStatus: g.compliance_status as string,
         hospitalName,
+        ragContext: ragContext || undefined,
       })
 
       await supabase
