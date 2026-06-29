@@ -156,7 +156,7 @@ function EntryChecklistSection({
 
   const allItems = [
     ...entry.items,
-    ...entry.categories.flatMap((c) => c.items),
+    ...(entry.categories ?? []).flatMap((c) => c.items ?? []),
   ]
 
   if (allItems.length === 0) return null
@@ -274,11 +274,11 @@ export default function SelfAssessmentClient({ hospitalId, tree, existingAssessm
   const summary = calcSummary()
   const activeAreaData = tree.find((a) => a.code === activeArea)
 
-  let entries = activeAreaData?.chapters.flatMap((ch) => ch.entries) ?? []
+  let entries = (activeAreaData?.chapters ?? []).flatMap((ch) => ch.entries ?? [])
   if (sortByPriority) {
     entries = [...entries].sort((a, b) => {
-      const aMax = Math.max(...a.items.map((i) => resultsMap.get(i.id)?.priority_score ?? 0), ...a.categories.flatMap((c) => c.items.map((i) => resultsMap.get(i.id)?.priority_score ?? 0)))
-      const bMax = Math.max(...b.items.map((i) => resultsMap.get(i.id)?.priority_score ?? 0), ...b.categories.flatMap((c) => c.items.map((i) => resultsMap.get(i.id)?.priority_score ?? 0)))
+      const aMax = Math.max(...a.items.map((i) => resultsMap.get(i.id)?.priority_score ?? 0), ...(a.categories ?? []).flatMap((c) => (c.items ?? []).map((i) => resultsMap.get(i.id)?.priority_score ?? 0)))
+      const bMax = Math.max(...b.items.map((i) => resultsMap.get(i.id)?.priority_score ?? 0), ...(b.categories ?? []).flatMap((c) => (c.items ?? []).map((i) => resultsMap.get(i.id)?.priority_score ?? 0)))
       return bMax - aMax
     })
   }

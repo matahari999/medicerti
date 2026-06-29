@@ -206,11 +206,11 @@ export default function AccreditationTreeView({ tree }: Props) {
 
   const activeAreaData = tree.find((a) => a.code === activeArea)
 
-  const allItems = tree.flatMap((a) =>
-    a.chapters.flatMap((ch) =>
-      ch.entries.flatMap((e) => [
-        ...e.items,
-        ...e.categories.flatMap((cat) => cat.items),
+  const allItems = (tree ?? []).flatMap((a) =>
+    (a.chapters ?? []).flatMap((ch) =>
+      (ch.entries ?? []).flatMap((e) => [
+        ...(e.items ?? []),
+        ...(e.categories ?? []).flatMap((cat) => cat.items ?? []),
       ])
     )
   )

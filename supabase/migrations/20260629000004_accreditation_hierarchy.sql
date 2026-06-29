@@ -174,26 +174,26 @@ BEGIN
       'name', a.name,
       'name_en', a.name_en,
       'color', a.color,
-      'chapters', (
+      'chapters', COALESCE((
         SELECT jsonb_agg(
           jsonb_build_object(
             'id', ch.id,
             'code', ch.code,
             'title', ch.title,
             'description', ch.description,
-            'entries', (
+            'entries', COALESCE((
               SELECT jsonb_agg(
                 jsonb_build_object(
                   'id', e.id,
                   'code', e.code,
                   'title', e.title,
                   'description', e.description,
-                  'categories', (
+                  'categories', COALESCE((
                     SELECT jsonb_agg(
                       jsonb_build_object(
                         'id', cat.id,
                         'name', cat.name,
-                        'items', (
+                        'items', COALESCE((
                           SELECT jsonb_agg(
                             jsonb_build_object(
                               'id', si.id,
@@ -209,11 +209,11 @@ BEGIN
                               'category_id', si.category_id
                             ) ORDER BY si.sort_order
                           ) FROM filtered_items si WHERE si.category_id = cat.id
-                        )
+                        ), '[]'::JSONB)
                       ) ORDER BY cat.sort_order
                     ) FROM filtered_categories cat WHERE cat.entry_id = e.id
-                  ),
-                  'items', (
+                  ), '[]'::JSONB),
+                  'items', COALESCE((
                     SELECT jsonb_agg(
                       jsonb_build_object(
                         'id', si.id,
@@ -229,13 +229,13 @@ BEGIN
                         'category_id', si.category_id
                       ) ORDER BY si.sort_order
                     ) FROM filtered_items si WHERE si.entry_id = e.id AND si.category_id IS NULL
-                  )
+                  ), '[]'::JSONB)
                 ) ORDER BY e.sort_order
               ) FROM filtered_entries e WHERE e.chapter_id = ch.id
-            )
+            ), '[]'::JSONB)
           ) ORDER BY ch.sort_order
         ) FROM filtered_chapters ch WHERE ch.area_id = a.id
-      )
+      ), '[]'::JSONB)
     ) ORDER BY a.sort_order
   ) INTO v_result FROM filtered_areas a;
 
