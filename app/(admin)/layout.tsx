@@ -51,6 +51,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             사용자 관리
           </Link>
           <Link
+            href="/admin/criteria"
+            className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+          >
+            인증기준 관리
+          </Link>
+          <Link
             href="/admin/tools"
             className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
           >

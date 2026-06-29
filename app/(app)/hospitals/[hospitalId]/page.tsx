@@ -54,7 +54,7 @@ export default async function HospitalDetailPage({ params }: Props) {
     { href: `/hospitals/${hospitalId}/rounding`,        label: '라운딩/모의조사', icon: TrendingUp,  desc: '월별 점검 + 추세 그래프', badge: null },
   { href: `/hospitals/${hospitalId}/preparation`,     label: '인증 준비 위자드', icon: ClipboardList, desc: '단계별 체크리스트 가이드', badge: null },
     { href: `/hospitals/${hospitalId}/criteria`,        label: '인증 기준',     icon: ClipboardList, desc: '기준별 적합도 열람', badge: null },
-    { href: `/hospitals/${hospitalId}/regulations`,     label: 'AI 규정집',     icon: BookOpen,      desc: 'AI 정책 초안 자동 생성', badge: null },
+    { href: `/hospitals/${hospitalId}/regulations`,     label: '규정집',         icon: BookOpen,      desc: 'PDF 업로드 · AI 정책 초안 생성', badge: null },
     { href: `/hospitals/${hospitalId}/managed-docs`,    label: '관리 문서',     icon: FolderOpen,    desc: '법정양식·점검표·회의록 등', badge: null },
     { href: `/hospitals/${hospitalId}/acknowledgments`, label: '인지 확인 로그',  icon: FileCheck,    desc: '직원 규정 인지 증빙', badge: null },
     { href: `/hospitals/${hospitalId}/cross-mapping`,   label: '교차 매핑',     icon: GitBranch,    desc: '타 평가체계 중복 항목', badge: null },
