@@ -35,18 +35,18 @@ export function UserMenu({ name, email, avatarUrl }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2 w-full px-2 py-2 rounded-lg hover:bg-gray-100 transition-colors text-left">
-          <Avatar className="w-8 h-8 shrink-0">
+        <button className="flex items-center gap-2.5 w-full px-2 py-2 rounded-xl hover:bg-white/[0.07] transition-colors text-left border border-transparent hover:border-white/[0.06]">
+          <Avatar className="w-8 h-8 shrink-0 ring-2 ring-teal-400/30">
             <AvatarImage src={avatarUrl ?? undefined} />
-            <AvatarFallback className="bg-brand-100 text-brand-700 text-xs font-semibold">
+            <AvatarFallback className="bg-teal-500/20 text-teal-200 text-xs font-semibold">
               {initials}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">{name ?? '사용자'}</p>
-            <p className="text-xs text-muted-foreground truncate">{email}</p>
+            <p className="text-sm font-medium text-slate-100 truncate">{name ?? '사용자'}</p>
+            <p className="text-[11px] text-slate-500 truncate">{email}</p>
           </div>
-          <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+          <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />
         </button>
       </DropdownMenuTrigger>
 

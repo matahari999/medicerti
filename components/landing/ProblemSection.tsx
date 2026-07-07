@@ -1,4 +1,5 @@
 import { FileText, Layers, Users, TrendingUp } from 'lucide-react'
+import { Reveal } from './Reveal'
 
 const problems = [
   {
@@ -27,8 +28,8 @@ export function ProblemSection() {
   return (
     <section className="py-24 lg:py-32 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
+        <Reveal className="text-center max-w-2xl mx-auto mb-16">
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-gray-900">
             왜 요양병원 인증 준비가
             <br />
             <span className="text-[#0d9488]">어려운가요?</span>
@@ -36,20 +37,19 @@ export function ProblemSection() {
           <p className="mt-4 text-lg text-gray-500">
             매 달 반복되는 서류 작업과 누락된 증빙이 인증 준비를 더 힘들게 만듭니다
           </p>
-        </div>
+        </Reveal>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {problems.map((p) => (
-            <div
-              key={p.title}
-              className="group relative bg-white border border-gray-100 rounded-2xl p-6 hover:shadow-lg hover:border-[#99f6e4] transition-all duration-300"
-            >
-              <div className="w-11 h-11 bg-[#f0fdfa] rounded-xl flex items-center justify-center mb-4 group-hover:bg-[#0d9488] transition-colors duration-300">
-                <p.icon className="w-5 h-5 text-[#0d9488] group-hover:text-white transition-colors duration-300" />
+          {problems.map((p, i) => (
+            <Reveal key={p.title} delay={i * 90}>
+              <div className="group relative h-full bg-white border border-gray-200/70 rounded-2xl p-6 shadow-card hover:shadow-elevated hover:border-[#99f6e4] hover:-translate-y-1 transition-all duration-300">
+                <div className="w-11 h-11 bg-gradient-to-br from-[#f0fdfa] to-[#ccfbf1] rounded-xl flex items-center justify-center mb-4 ring-1 ring-[#99f6e4]/40 group-hover:from-[#14b8a6] group-hover:to-[#0d9488] group-hover:ring-0 group-hover:shadow-lg group-hover:shadow-teal-500/30 transition-all duration-300">
+                  <p.icon className="w-5 h-5 text-[#0d9488] group-hover:text-white transition-colors duration-300" />
+                </div>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">{p.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{p.desc}</p>
               </div>
-              <h3 className="text-base font-semibold text-gray-900 mb-2">{p.title}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{p.desc}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>

@@ -28,8 +28,8 @@ export default function MediLogo({ size = 32 }: { size?: number }) {
       <circle cx="20" cy="20" r="3" fill="url(#shieldGrad)" />
       <defs>
         <linearGradient id="shieldGrad" x1="5" y1="3" x2="35" y2="38" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#3B82F6"/>
-          <stop offset="100%" stopColor="#1D4ED8"/>
+          <stop offset="0%" stopColor="#2DD4BF"/>
+          <stop offset="100%" stopColor="#0D9488"/>
         </linearGradient>
       </defs>
     </svg>

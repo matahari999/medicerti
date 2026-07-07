@@ -1,6 +1,6 @@
 import { REGULATION_LIBRARY, RegulationReference } from './regulationLibrary';
 import { getCatalog } from './standardCatalog';
-import type { StandardItem, HospitalTypeKey } from './types';
+import type { StandardItem, StandardChapter, HospitalTypeKey } from './types';
 
 // ─── 제목 유사도 기반 참조 규정 검색 ─────────────────────────
 const norm = (s: string) => s.replace(/[\s,,·()/]/g, '');
@@ -85,6 +85,22 @@ function mapRefToStd4Number(ref: RegulationReference): string | null {
   return hit ? hit[2] : null;
 }
 
+// ─── 장(chapter) 전체 요청 시: 그 장에 속한 기준마다 3주기 참조 규정을 모아온다 ──
+// (예: 1장 요청 → 1.1/1.2/1.3에 매핑되는 2021년 실무 규정 3건을 전부 그라운딩으로 사용)
+export function findReferenceRegulationsForChapter(
+  hospitalType: string,
+  chapter: StandardChapter,
+  perItemLimit = 1,
+): RegulationReference[] {
+  if (hospitalType !== 'nursing') return [];
+  const out: RegulationReference[] = [];
+  for (const item of chapter.items) {
+    const matches = REGULATION_LIBRARY.filter((r) => mapRefToStd4Number(r) === item.itemNumber).slice(0, perItemLimit);
+    out.push(...matches);
+  }
+  return out;
+}
+
 // ─── 현행 기준(해당 병원 유형 카탈로그) 조회 ─────────────────
 export function findCurrentStandardItem(
   hospitalType: string,
@@ -111,12 +127,45 @@ export function findCurrentStandardItem(
   return best && best.score >= 40 ? best.it : null;
 }
 
+// ─── "N장" 단위 요청 감지 — 장 전체(모든 기준)를 그라운딩 컨텍스트로 사용 ──
+// "1장", "제1장", "1 장", "1장. 환자안전보장활동", "환자안전보장활동 규정집" 등을 인식한다.
+export function findCurrentChapter(
+  hospitalType: string,
+  documentTitle: string,
+): StandardChapter | null {
+  const catalog = getCatalog((hospitalType || 'other') as HospitalTypeKey);
+  if (catalog.chapters.length === 0) return null;
+
+  // 1) "N장" 숫자 패턴 우선 매칭 (가장 명확한 의도)
+  const numMatch = documentTitle.match(/제?\s*(\d{1,2})\s*장/);
+  if (numMatch) {
+    const chapter = catalog.chapters.find((c) => c.chapterNumber === numMatch[1]);
+    if (chapter) return chapter;
+  }
+
+  // 2) 장 제목과의 유사도 매칭 (숫자 없이 "환자안전보장활동 규정집" 같은 요청 대응)
+  const best = catalog.chapters
+    .map((c) => ({ c, score: similarity(documentTitle, c.chapterTitle) }))
+    .sort((a, b) => b.score - a.score)[0];
+  return best && best.score >= 50 ? best.c : null;
+}
+
+function isChapter(x: StandardItem | StandardChapter): x is StandardChapter {
+  return 'items' in x;
+}
+
 // ─── 규정에 딸린 서식 세트 (현행 기준의 요구 서식·점검표) ────
-export function getLinkedForms(std: StandardItem | null, refs: RegulationReference[]): string[] {
+export function getLinkedForms(
+  std: StandardItem | StandardChapter | null,
+  refs: RegulationReference[],
+): string[] {
   const out = new Set<string>();
   if (std) {
-    std.requiredForms.forEach((f) => out.add(f));
-    std.requiredChecklists.forEach((f) => out.add(f));
+    const items = isChapter(std) ? std.items : [std];
+    items.forEach((it) => {
+      it.requiredForms.forEach((f) => out.add(f));
+      it.requiredChecklists.forEach((f) => out.add(f));
+    });
   }
   // 참조 규정 부록의 서식명도 후보로 추가 (별첨/서식 표기 라인)
   refs.forEach((r) => {
@@ -146,11 +195,24 @@ export const REGULATION_FORMAT_GUIDE = `
 
 export function buildReferenceContext(
   refs: RegulationReference[],
-  currentStd: StandardItem | null,
+  currentStd: StandardItem | StandardChapter | null,
 ): string {
   const parts: string[] = [];
 
-  if (currentStd) {
+  if (currentStd && isChapter(currentStd)) {
+    const itemBlocks = currentStd.items.map((it) => `
+  ▸ 기준 ${it.itemNumber} ${it.itemTitle}
+    요구사항 요약: ${it.summary}
+    요구 규정·지침: ${it.requiredDocuments.join(', ') || '—'}
+    요구 서식: ${it.requiredForms.join(', ') || '—'}
+    요구 점검표: ${it.requiredChecklists.join(', ') || '—'}
+    필요 증빙: ${it.requiredEvidence.join(', ') || '—'}`).join('\n')
+
+    parts.push(`[현행 인증기준 — ${currentStd.chapterNumber}장 ${currentStd.chapterTitle} 전체(기준 ${currentStd.items.length}개)]
+이 요청은 특정 기준 하나가 아니라 이 장(chapter) 전체에 대한 규정집 작성 요청이다.
+아래 기준 ${currentStd.items.length}개를 단 하나도 빠짐없이 각각 정책/지침 및 절차 섹션의 하위 항목(예: "1.1 정확한 환자 확인 및 의사소통")으로 다뤄야 하며, 요약만 하지 말고 각 기준의 요구사항을 실제 수행 절차 수준으로 구체화하라.
+${itemBlocks}`)
+  } else if (currentStd) {
     parts.push(`[현행 인증기준 — 최신 기준이며 아래 참조 규정보다 항상 우선한다]
 기준 ${currentStd.itemNumber} ${currentStd.itemTitle}
 요구사항 요약: ${currentStd.summary}

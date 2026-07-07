@@ -22,6 +22,7 @@ import { SOP_TYPE_LABELS, SOP_TYPE_COLORS } from '@/types/database.types'
 
 interface Props {
   tree: AreaTree[]
+  typeFilter?: React.ReactNode
 }
 
 const SEVERITY_CONFIG = {
@@ -200,7 +201,7 @@ function ChapterSection({ chapter, defaultOpen: _defaultOpen }: { chapter: Chapt
   )
 }
 
-export default function AccreditationTreeView({ tree }: Props) {
+export default function AccreditationTreeView({ tree, typeFilter }: Props) {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeArea, setActiveArea] = useState<string>(tree[0]?.code ?? '')
 
@@ -237,15 +238,18 @@ export default function AccreditationTreeView({ tree }: Props) {
           </p>
         </div>
 
-        <div className="relative w-full md:w-72">
-          <Search className="absolute left-3 top-3 text-slate-400" size={14} />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="기준 코드 또는 키워드 검색..."
-            className="w-full text-xs pl-8 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-          />
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="relative flex-1 md:w-72">
+            <Search className="absolute left-3 top-3 text-slate-400" size={14} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="기준 코드 또는 키워드 검색..."
+              className="w-full text-xs pl-8 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            />
+          </div>
+          {typeFilter}
         </div>
       </div>
 

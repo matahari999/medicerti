@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Noto_Sans_KR } from 'next/font/google'
+import { Inter, Noto_Sans_KR, Noto_Serif_KR } from 'next/font/google'
 import './globals.css'
 
 const inter = Inter({
@@ -12,6 +12,13 @@ const notoSansKR = Noto_Sans_KR({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-noto-sans-kr',
+  display: 'swap',
+})
+
+const notoSerifKR = Noto_Serif_KR({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  variable: '--font-noto-serif-kr',
   display: 'swap',
 })
 
@@ -31,7 +38,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className={`${inter.variable} ${notoSansKR.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${notoSansKR.variable} ${notoSerifKR.variable} font-sans antialiased`}>
         {children}
       </body>
     </html>

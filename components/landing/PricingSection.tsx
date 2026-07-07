@@ -1,5 +1,6 @@
 import { CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
+import { Reveal } from './Reveal'
 
 const plans = [
   {
@@ -59,8 +60,8 @@ export function PricingSection() {
   return (
     <section id="pricing" className="py-24 lg:py-32 bg-gray-50/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
+        <Reveal className="text-center max-w-2xl mx-auto mb-16">
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-gray-900">
             병원 규모에 맞는
             <br />
             <span className="text-[#0d9488]">가격 플랜</span>
@@ -68,20 +69,21 @@ export function PricingSection() {
           <p className="mt-4 text-lg text-gray-500">
             모든 플랜 14일 무료 체험 — 신용카드 필요 없음
           </p>
-        </div>
+        </Reveal>
 
         <div className="grid lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {plans.map((plan) => (
-            <div
+          {plans.map((plan, i) => (
+            <Reveal
               key={plan.name}
-              className={`relative bg-white rounded-2xl border p-6 lg:p-8 flex flex-col ${
+              delay={i * 100}
+              className={`relative h-full bg-white rounded-2xl border p-6 lg:p-8 flex flex-col transition-all duration-300 ${
                 plan.popular
-                  ? 'border-[#0d9488] shadow-xl shadow-[#0d9488]/10 ring-1 ring-[#0d9488] scale-[1.02] lg:scale-105'
-                  : 'border-gray-100 shadow-sm'
+                  ? 'border-[#0d9488] shadow-elevated shadow-[#0d9488]/10 ring-1 ring-[#0d9488] scale-[1.02] lg:scale-105'
+                  : 'border-gray-200/70 shadow-card hover:shadow-card-hover hover:-translate-y-1'
               }`}
             >
               {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#0d9488] text-white text-xs font-semibold rounded-full">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-[#14b8a6] to-[#0d9488] text-white text-xs font-semibold rounded-full shadow-lg shadow-teal-500/30">
                   가장 많이 선택
                 </div>
               )}
@@ -109,13 +111,13 @@ export function PricingSection() {
                 href={plan.href}
                 className={`block text-center py-3 px-6 rounded-xl text-sm font-semibold transition-all ${
                   plan.popular
-                    ? 'bg-[#0d9488] text-white hover:bg-[#0f766e] shadow-lg shadow-[#0d9488]/20'
+                    ? 'bg-gradient-to-r from-[#14b8a6] to-[#0d9488] text-white hover:from-[#0d9488] hover:to-[#0f766e] shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40'
                     : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
                 }`}
               >
                 {plan.cta}
               </Link>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>

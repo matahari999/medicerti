@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { retrieveRelevantChunks, formatRagContext } from '@/lib/rag';
 import { GEMINI_MODEL } from '@/lib/constants';
-import { findReferenceRegulations, buildReferenceContext, findCurrentStandardItem, getLinkedForms, REGULATION_FORMAT_GUIDE } from '@/lib/regulationTemplate';
+import { findReferenceRegulations, findReferenceRegulationsForChapter, buildReferenceContext, findCurrentStandardItem, findCurrentChapter, getLinkedForms, REGULATION_FORMAT_GUIDE } from '@/lib/regulationTemplate';
 import { generateCustomFormHtml } from '@/lib/formGenerator';
+import type { StandardItem } from '@/lib/types';
 
 // AI가 만든 서식 본문 HTML 정제: 코드펜스 제거 + 스크립트/이벤트 핸들러 차단
 function sanitizeFormBody(raw: string): string {
@@ -35,7 +36,7 @@ const FORM_FORMAT_GUIDE = `
 5) 마지막에 <div class="sec-title">■ 관련 근거</div> + 근거 표: 관련 법령 조항(의료법 시행규칙·환자안전법 등 실제 조문)과 인증기준 번호를 행으로 명시
 `;
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 function getMockResponse(hospitalType: string, hospitalName: string, documentType: string, documentTitle: string) {
       const hospitalTypeLabels: Record<string, string> = {
@@ -131,14 +132,22 @@ export async function POST(request: Request) {
 
     // 3. 규정집/지침서/매뉴얼: 실제 규정집 라이브러리에서 참조 골격 검색
     //    + 현행(최신 주기) 인증기준을 찾아 우선 기준으로 주입 (2021 참조 규정은 구 주기이므로 갱신 지시)
+    //    "1장" 처럼 장(chapter) 전체를 요청한 경우, 그 장에 속한 기준 전부를 그라운딩으로 사용한다.
     const isRegulationLike = ['regulation', 'guideline', 'manual'].includes(documentType);
     const isFormLike = ['form', 'checklist', 'record'].includes(documentType);
-    const referenceRegs = (isRegulationLike || isFormLike) ? findReferenceRegulations(documentTitle) : [];
-    const currentStd = (isRegulationLike || isFormLike)
-      ? findCurrentStandardItem(hospitalType, documentTitle, referenceRegs)
+
+    const matchedChapter = (isRegulationLike || isFormLike)
+      ? findCurrentChapter(hospitalType, documentTitle)
       : null;
+
+    const referenceRegs = matchedChapter
+      ? findReferenceRegulationsForChapter(hospitalType, matchedChapter)
+      : (isRegulationLike || isFormLike) ? findReferenceRegulations(documentTitle) : [];
+    const currentStd = matchedChapter
+      ?? ((isRegulationLike || isFormLike) ? findCurrentStandardItem(hospitalType, documentTitle, referenceRegs) : null);
     const referenceContext = buildReferenceContext(referenceRegs, currentStd);
     const linkedForms = isRegulationLike ? getLinkedForms(currentStd, referenceRegs) : [];
+    const isFullChapterRequest = matchedChapter !== null;
 
     // 4. 시스템/유저 프롬프트 준비
     const systemPrompt = isFormLike
@@ -154,6 +163,7 @@ ${FORM_FORMAT_GUIDE}${referenceContext}`
 2. 병원명, 병원 유형의 특성(예: 요양병원의 낙상, 억제대 특화 지침)에 부합하게 작성하라.
 3. 문서 내에 (작성일), (서명) 등 채워 넣어야 하는 실무 플레이스홀더를 제공하라.
 4. 문서 제목(H1)과 병원명은 요청받은 값을 한 글자도 바꾸지 말고 그대로 사용하라. 참조 자료의 주제가 요청 제목과 다르면 반드시 요청 제목을 따르라.${
+      isFullChapterRequest ? '\n5. 이 요청은 장(chapter) 전체 규정집 작성 요청이다. 아래 [현행 인증기준]에 나열된 기준을 하나도 빠짐없이, 각 기준 번호를 소제목으로 삼아 지침 및 절차 섹션에 전부 포함하라. 일부만 다루거나 요약만 하고 끝내지 마라.' : ''}${
       isRegulationLike ? `\n${REGULATION_FORMAT_GUIDE}` : ''}${referenceContext}${
       ragContext ? `\n\n[인증기준 참조 — RAG 검색 결과]\n${ragContext}` : ''}`;
 
@@ -195,10 +205,10 @@ ${FORM_FORMAT_GUIDE}${referenceContext}`
           },
           generationConfig: {
             temperature: 0.2,
-            maxOutputTokens: isRegulationLike ? 8000 : isFormLike ? 5000 : 2500
+            maxOutputTokens: isFullChapterRequest ? 16000 : isRegulationLike ? 8000 : isFormLike ? 5000 : 2500
           }
         }),
-        signal: AbortSignal.timeout(45000), // 45초 타임아웃 (규정집은 분량이 큼)
+        signal: AbortSignal.timeout(isFullChapterRequest ? 100000 : 45000), // 장 전체 요청은 컨텍스트·출력이 커서 타임아웃을 넉넉히 잡는다
       });
 
       let response = await callGemini();
@@ -226,7 +236,7 @@ ${FORM_FORMAT_GUIDE}${referenceContext}`
         },
         body: JSON.stringify({
           model: 'claude-sonnet-5',
-          max_tokens: isRegulationLike ? 8000 : 2500,
+          max_tokens: isFullChapterRequest ? 16000 : isRegulationLike ? 8000 : 2500,
           messages: [
             {
               role: 'user',
@@ -235,7 +245,7 @@ ${FORM_FORMAT_GUIDE}${referenceContext}`
           ],
           system: systemPrompt,
         }),
-        signal: AbortSignal.timeout(45000), // 45초 타임아웃 (규정집은 분량이 큼)
+        signal: AbortSignal.timeout(isFullChapterRequest ? 100000 : 45000), // 장 전체 요청은 컨텍스트·출력이 커서 타임아웃을 넉넉히 잡는다
       });
 
       if (!response.ok) {
@@ -259,7 +269,11 @@ ${FORM_FORMAT_GUIDE}${referenceContext}`
         formHtml = generateCustomFormHtml({
           title: documentTitle,
           hospitalName,
-          related: currentStd ? `인증기준 ${currentStd.itemNumber} ${currentStd.itemTitle}` : '의료기관 인증기준',
+          related: matchedChapter
+            ? `인증기준 ${matchedChapter.chapterNumber}장 ${matchedChapter.chapterTitle}`
+            : currentStd
+              ? `인증기준 ${(currentStd as StandardItem).itemNumber} ${(currentStd as StandardItem).itemTitle}`
+              : '의료기관 인증기준',
           target: additionalContext?.includes('부서') ? '해당 부서' : '전 부서',
           bodyHtml,
         });
@@ -268,14 +282,18 @@ ${FORM_FORMAT_GUIDE}${referenceContext}`
       }
     }
 
+    const currentStandard = matchedChapter
+      ? { number: `${matchedChapter.chapterNumber}장`, title: `${matchedChapter.chapterTitle} (기준 ${matchedChapter.items.length}개 전체)` }
+      : currentStd
+        ? { number: (currentStd as StandardItem).itemNumber, title: (currentStd as StandardItem).itemTitle }
+        : null;
+
     return NextResponse.json({
       result: resultText,
       isMock: false,
       formHtml,
       linkedForms,
-      currentStandard: currentStd
-        ? { number: currentStd.itemNumber, title: currentStd.itemTitle }
-        : null,
+      currentStandard,
     });
   } catch (error: any) {
     console.error('문서 생성 오류:', error.message);

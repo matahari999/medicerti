@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
+import { Reveal } from './Reveal'
 
 const faqs = [
   {
@@ -36,17 +37,20 @@ export function FAQSection() {
   return (
     <section className="py-24 lg:py-32 bg-white">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
+        <Reveal className="text-center max-w-2xl mx-auto mb-16">
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-gray-900">
             자주 묻는 질문
           </h2>
-        </div>
+        </Reveal>
 
         <div className="space-y-3">
           {faqs.map((faq, i) => (
-            <div
+            <Reveal
               key={i}
-              className="border border-gray-100 rounded-xl overflow-hidden transition-all duration-200"
+              delay={i * 60}
+              className={`border rounded-xl overflow-hidden transition-all duration-200 ${
+                openId === i ? 'border-[#99f6e4] shadow-card bg-[#f0fdfa]/30' : 'border-gray-200/70 hover:border-gray-300'
+              }`}
             >
               <button
                 onClick={() => setOpenId(openId === i ? null : i)}
@@ -68,7 +72,7 @@ export function FAQSection() {
                   {faq.a}
                 </div>
               </div>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>

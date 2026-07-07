@@ -1,3 +1,5 @@
+import { Reveal } from './Reveal'
+
 const features = [
   {
     id: 'structure',
@@ -164,8 +166,8 @@ export function FeaturesSection() {
   return (
     <section id="features" className="py-24 lg:py-32 bg-gray-50/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
+        <Reveal className="text-center max-w-2xl mx-auto mb-16">
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-gray-900">
             하나의 플랫폼에서
             <br />
             <span className="text-[#0d9488]">인증 준비 전 과정</span>을
@@ -173,35 +175,42 @@ export function FeaturesSection() {
           <p className="mt-4 text-lg text-gray-500">
             기준 분석부터 갭 평가, 문서 생성, 직원 증빙까지 — 엑셀과 이메일을 벗어나세요
           </p>
-        </div>
+        </Reveal>
 
         <div className="space-y-20 lg:space-y-28">
           {features.map((f, i) => (
-            <div
+            <Reveal
               key={f.id}
               className={`flex flex-col ${i % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-8 lg:gap-16 items-center`}
             >
               {/* Text */}
               <div className="flex-1 space-y-4">
-                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r ${f.gradient} text-white text-xs font-semibold`}>
+                <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r ${f.gradient} text-white text-xs font-semibold shadow-md`}>
                   <span className="text-white/70">0{i + 1}</span>
+                  <span className="w-px h-3 bg-white/30" />
                   <span>Feature</span>
                 </div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900">{f.title}</h3>
+                <h3 className="font-serif text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">{f.title}</h3>
                 <p className="text-base text-gray-500 leading-relaxed">{f.desc}</p>
               </div>
 
               {/* Mockup */}
               <div className="flex-1 w-full max-w-md">
-                <div className="relative">
+                <div className="relative group">
                   {/* Decorative bg */}
-                  <div className={`absolute -inset-4 bg-gradient-to-r ${f.gradient} opacity-5 rounded-3xl blur-xl`} />
-                  <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-100 shadow-lg">
+                  <div className={`absolute -inset-4 bg-gradient-to-r ${f.gradient} opacity-[0.08] rounded-3xl blur-xl group-hover:opacity-[0.14] transition-opacity duration-500`} />
+                  <div className="relative bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/70 shadow-elevated group-hover:-translate-y-1 transition-transform duration-500">
+                    {/* Browser chrome dots */}
+                    <div className="flex items-center gap-1.5 px-4 pt-3">
+                      <span className="w-2.5 h-2.5 rounded-full bg-gray-200" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-gray-200" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-gray-200" />
+                    </div>
                     {f.mockup}
                   </div>
                 </div>
               </div>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>
