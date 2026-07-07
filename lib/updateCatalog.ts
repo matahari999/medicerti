@@ -39,12 +39,12 @@ export const UPDATE_ENTRIES: UpdateEntry[] = [
   {
     id: 'basic-casebook-v1',
     category: 'regulation',
-    title: '기본 인증기준 규정 사례집 Ver. 1.0 (수정판)',
+    title: '기본 인증기준 규정 사례집 Ver. 1.0 (2026.5.21. 수정판)',
     version: 'Ver. 1.0',
-    publishedDate: '2026-03-30',
+    publishedDate: '2026-05-21',
     hospitalTypes: ['hospital'],
     summary:
-      '기본 인증기준에 맞춘 규정 작성 예시 모음집(240p). 기준별 규정 목차·필수 포함 내용·작성 사례를 제공하므로 병원급 의료기관의 규정집 신규 작성·개정 시 직접 참고 가능.',
+      '기본 인증기준에 맞춘 규정 작성 예시 모음집(240p, 2026.3.30. 초판 → 5.21. 수정 재배포). 기준별 규정 목차·필수 포함 내용·작성 사례를 제공하므로 병원급 의료기관의 규정집 신규 작성·개정 시 직접 참고 가능.',
     affectedDocuments: ['원내 전체 규정집 (작성·개정 시 참조)', '규정 관리 규정(문서관리 규정)'],
     sourceName: '의료기관평가인증원',
     sourceUrl: 'https://www.koiha.or.kr',
@@ -91,6 +91,32 @@ export const UPDATE_ENTRIES: UpdateEntry[] = [
     sourceName: '의료기관평가인증원',
     sourceUrl: 'https://www.koiha.or.kr',
     isImportant: true,
+  },
+  {
+    id: 'korean-plan-4th',
+    category: 'criteria_book',
+    title: '4주기 한방병원 인증 추진 계획 — 기준은 3주기와 동일 적용',
+    version: '4주기',
+    hospitalTypes: ['korean'],
+    summary:
+      '4주기 한방병원 인증기준은 3주기와 동일하게 적용 결정(개정사항 없음). 11장·60기준 체계 유지. 인증기간 중 환자안전 집중 관리를 위한 "최우선관리 기준"이 별도 선정됨. 중간자체조사·중간현장조사·수시조사 등 사후관리 절차 포함.',
+    affectedDocuments: ['최우선관리 기준 자체점검표', '기존 3주기 규정집 (그대로 유효 — 개정 불필요)'],
+    sourceName: '의료기관평가인증원 (추진 계획)',
+    sourceUrl: 'https://www.koiha.or.kr',
+    isImportant: false,
+  },
+  {
+    id: 'nursing-schedule-rule',
+    category: 'etc',
+    title: '요양병원 인증조사 일정 변경 세부규칙 (2024년 개정)',
+    publishedDate: '2024-04-29',
+    hospitalTypes: ['nursing'],
+    summary:
+      '인증조사 일정 변경은 조사일 2~6개월 전 신청, 인증주기 내 1회만 가능. 변경 요건: ①인력 50% 이상 증감 ②병상·구조 50% 이상 변경(공사) ③양도·양수 ④휴업 등 미운영 ⑤천재지변 등. 공문+증빙 필요. 일정변경으로 인한 인증 유효기간 공백의 불이익(인증연계수가 등)은 의료기관 부담.',
+    affectedDocuments: ['인증 준비 마스터플랜 (일정 리스크 관리)', '일정 변경 신청 공문 양식'],
+    sourceName: '의료기관평가인증원 인증평가본부',
+    sourceUrl: 'https://ae.koiha.or.kr',
+    isImportant: false,
   },
   {
     id: 'korean-guide-4th',
