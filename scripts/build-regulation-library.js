@@ -12,7 +12,7 @@ let text = fs.readFileSync(SRC, 'utf-8');
 text = text.replace(/일산호수요양병원/g, '{{병원명}}').replace(/일산호수/g, '{{병원명}}');
 
 // 규정 제목 라인: "1.1 정확한 환자확인" 형태 (다음 500자 내에 규정 헤더표 또는 ▣ 목적 존재)
-const titleRe = /^[ \t]*(\d{1,2}\.\d{1,2}(?:\.\d{1,2})?)[ ]?([가-힣][가-힣A-Za-z ,·()/]{1,40}?)[ \t]*$/gm;
+const titleRe = /^[ \t]*(\d{1,2}\.\d{1,2}(?:\.\d{1,2})?)[ ]{0,3}([가-힣][가-힣A-Za-z ,·()/]{1,40}?)[ \t]*$/gm;
 const marks = [];
 let m;
 while ((m = titleRe.exec(text))) {
@@ -49,19 +49,26 @@ const entries = regs.map((r) => {
   const dept = meta(r.block, '담 ?당 ?부 ?서');
   const cycle = meta(r.block, '검 ?토 ?주 ?기');
   const relatedStd = meta(r.block, '관련인증기준');
+  const purpose = section(r.block, ['목적'], 1500);
+  const procedure = section(r.block, ['지침 및 절차'], 6000);
+  // ▣ 골격이 없는 표 중심 규정(시설 기준표·인력 기준표 등)은 본문을 통째로 보존
+  const body = (!purpose && !procedure)
+    ? r.block.replace(/\n{3,}/g, '\n\n').trim().slice(0, 5000)
+    : '';
   return {
     stdRef3: r.num, // 3주기 요양병원 기준 번호 (2021년 규정집 기준)
     title: r.title,
     department: dept,
     reviewCycle: cycle,
     relatedStandard: relatedStd,
-    purpose: section(r.block, ['목적'], 1500),
+    purpose,
     definitions: section(r.block, ['용어의 정의', '용어정의', '정의'], 2500),
     policy: section(r.block, ['정책', '정 책'], 2500),
-    procedure: section(r.block, ['지침 및 절차'], 6000),
+    procedure,
     appendix: section(r.block, ['부록'], 1200),
+    body,
   };
-}).filter((e) => e.purpose || e.procedure);
+}).filter((e) => e.purpose || e.procedure || e.body.length >= 800);
 
 const header = `// 자동 생성 파일 — scripts/build-regulation-library.js 로 재생성
 // 출처: 2021년 요양병원 규정집 합본(실무 규정 ${entries.length}종, 병원명 비식별화 완료)
@@ -79,6 +86,7 @@ export interface RegulationReference {
   policy: string;
   procedure: string;
   appendix: string;
+  body: string; // ▣ 골격 없는 표 중심 규정의 원문 (그 외에는 빈 문자열)
 }
 
 export const REGULATION_LIBRARY: RegulationReference[] = `;

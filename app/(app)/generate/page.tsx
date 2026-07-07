@@ -258,6 +258,9 @@ export default function GeneratePage() {
   const [result, setResult] = useState<string | null>(null);
   const [isResultMock, setIsResultMock] = useState(false);
   const [error, setError] = useState('');
+  // 규정 생성 시 함께 안내되는 딸린 서식 세트 (현행 인증기준 요구 서식 + 참조 규정 부록)
+  const [linkedForms, setLinkedForms] = useState<string[]>([]);
+  const [currentStandard, setCurrentStandard] = useState<{ number: string; title: string } | null>(null);
   
   // 편집기 모드 상태
   const [isEditing, setIsEditing] = useState(false);
@@ -328,6 +331,11 @@ export default function GeneratePage() {
       setIsResultMock(!!resJson.isMock);
       if (resJson.isMock && resJson.userMessage) {
         setError(resJson.userMessage);
+      }
+      // 서식 칩 클릭으로 개별 서식을 생성할 때는 기존 서식 세트 패널을 유지
+      if (data.documentType !== 'form') {
+        setLinkedForms(resJson.linkedForms || []);
+        setCurrentStandard(resJson.currentStandard || null);
       }
       
       // 편집용 상태도 미리 설정
@@ -479,6 +487,42 @@ export default function GeneratePage() {
                 </div>
 
                 <DraftDisclaimer variant="result" />
+
+                {linkedForms.length > 0 && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <div className="text-xs font-bold text-emerald-800 mb-2">
+                      📎 이 규정에 딸린 서식 세트
+                      {currentStandard && (
+                        <span className="font-normal text-emerald-700"> — 현행 기준 {currentStandard.number} {currentStandard.title}</span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {linkedForms.map((f) => (
+                        <button
+                          key={f}
+                          type="button"
+                          disabled={isGenerating}
+                          onClick={() =>
+                            currentInput &&
+                            handleGenerate({
+                              hospitalType: currentInput.hospitalType,
+                              hospitalName: currentInput.hospitalName,
+                              documentType: 'form' as DocumentType,
+                              documentTitle: f,
+                              additionalContext: `"${currentInput.documentTitle}" 규정에 첨부되는 실무 서식입니다. A4 1장 분량의 표 중심 서식(기재란·서명란 포함)으로 작성해주세요.${currentStandard ? ` 관련 인증기준: ${currentStandard.number} ${currentStandard.title}` : ''}`,
+                            })
+                          }
+                          className="text-xs px-2.5 py-1 bg-white text-emerald-700 border border-emerald-300 rounded-lg hover:bg-emerald-100 disabled:opacity-50 cursor-pointer"
+                        >
+                          {f} ＋생성
+                        </button>
+                      ))}
+                    </div>
+                    <div className="text-[11px] text-emerald-600 mt-2">
+                      서식을 클릭하면 해당 서식 초안이 바로 생성됩니다. (규정 초안은 최근 생성 이력에서 다시 볼 수 있습니다)
+                    </div>
+                  </div>
+                )}
 
                 <div className="bg-slate-50 rounded-lg p-4 font-mono text-sm text-slate-800 whitespace-pre-wrap leading-relaxed max-h-[400px] overflow-y-auto border border-slate-200">
                   {result}

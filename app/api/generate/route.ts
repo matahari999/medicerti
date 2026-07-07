@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { retrieveRelevantChunks, formatRagContext } from '@/lib/rag';
 import { GEMINI_MODEL } from '@/lib/constants';
-import { findReferenceRegulations, buildReferenceContext, REGULATION_FORMAT_GUIDE } from '@/lib/regulationTemplate';
+import { findReferenceRegulations, buildReferenceContext, findCurrentStandardItem, getLinkedForms, REGULATION_FORMAT_GUIDE } from '@/lib/regulationTemplate';
 
 export const maxDuration = 60;
 
@@ -98,9 +98,14 @@ export async function POST(request: Request) {
     const ragContext = formatRagContext(ragChunks);
 
     // 3. 규정집/지침서/매뉴얼: 실제 규정집 라이브러리에서 참조 골격 검색
+    //    + 현행(최신 주기) 인증기준을 찾아 우선 기준으로 주입 (2021 참조 규정은 구 주기이므로 갱신 지시)
     const isRegulationLike = ['regulation', 'guideline', 'manual'].includes(documentType);
     const referenceRegs = isRegulationLike ? findReferenceRegulations(documentTitle) : [];
-    const referenceContext = buildReferenceContext(referenceRegs);
+    const currentStd = isRegulationLike
+      ? findCurrentStandardItem(hospitalType, documentTitle, referenceRegs)
+      : null;
+    const referenceContext = buildReferenceContext(referenceRegs, currentStd);
+    const linkedForms = isRegulationLike ? getLinkedForms(currentStd, referenceRegs) : [];
 
     // 4. 시스템/유저 프롬프트 준비
     const systemPrompt = `너는 대한민국 의료기관평가인증 기준 및 병원 규정 수립에 정통한 도메인 전문가이자 시니어 병원 행정 컨설턴트이다.
@@ -211,6 +216,10 @@ export async function POST(request: Request) {
     return NextResponse.json({
       result: resultText,
       isMock: false,
+      linkedForms,
+      currentStandard: currentStd
+        ? { number: currentStd.itemNumber, title: currentStd.itemTitle }
+        : null,
     });
   } catch (error: any) {
     console.error('문서 생성 오류:', error.message);
