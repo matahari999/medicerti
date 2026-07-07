@@ -107,7 +107,7 @@ async function fetchKoihaNotices(): Promise<any[]> {
           content: `${title} 공지사항입니다. 인증원 홈페이지의 공지사항 게시판에서 원문을 확인하실 수 있습니다.`,
           source: 'koiha' as const,
           sourceUrl: `https://www.koiha.or.kr/koiha/p/menu/board.do?menuId=44&boardArticleNo=${articleNo}`,
-          urgency: title.includes('긴급') || title.includes('필독') || title.includes('안내') ? 'normal' : 'normal',
+          urgency: title.includes('긴급') || title.includes('필독') || title.includes('중요') ? 'urgent' : 'normal',
           targetHospitalTypes: ['nursing', 'acute', 'general'],
           publishedAt: new Date().toISOString(),
         });

@@ -77,7 +77,8 @@ export default async function NoticesPage({ searchParams }: Props) {
     return dateB - dateA;
   });
 
-  const sources: (NoticeSource | 'all')[] = ['all', 'koiha', 'hira', 'mohw', 'kdca'];
+  // 질병관리청(kdca)은 동기화 대상이 아니므로 필터에서 제외 (수집 소스: koiha·hira·mohw)
+  const sources: (NoticeSource | 'all')[] = ['all', 'koiha', 'hira', 'mohw'];
   const sourceLabels: Record<string, string> = {
     all: '전체',
     ...NOTICE_SOURCE_LABELS,
@@ -91,7 +92,7 @@ export default async function NoticesPage({ searchParams }: Props) {
           공지사항
         </h1>
         <p className="text-sm text-slate-500 mt-0.5">
-          의료기관평가인증원, 건강보험심사평가원, 보건복지부, 질병관리청 공지를 통합 제공합니다.
+          의료기관평가인증원, 건강보험심사평가원, 보건복지부 공지를 통합 제공합니다.
         </p>
       </div>
 
@@ -133,7 +134,7 @@ export default async function NoticesPage({ searchParams }: Props) {
 
       <div className="data-source">
         <span>출처:</span>
-        <span>의료기관평가인증원 · 건강보험심사평가원 · 보건복지부 · 질병관리청</span>
+        <span>의료기관평가인증원 · 건강보험심사평가원 · 보건복지부</span>
         <span>·</span>
         <span>동기화 시간: {formatDate(new Date().toISOString(), 'yyyy.MM.dd HH:mm')}</span>
       </div>

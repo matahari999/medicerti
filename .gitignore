@@ -37,6 +37,18 @@ next-env.d.ts
 
 # Misc
 temp/
+.omc/
 .vercel
 
 .vercel
+
+# 공식 기준집 원본 (대용량 바이너리 — 텍스트 추출본 raw_text.txt만 추적)
+guidelines/**/*.pdf
+guidelines/**/*.hwp
+guidelines/**/*.zip
+
+# KOIHA 동기화 스크립트
+scripts/koiha-sync/venv/
+scripts/koiha-sync/storage_state.json
+scripts/koiha-sync/downloads/
+scripts/koiha-sync/logs/

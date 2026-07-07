@@ -50,7 +50,7 @@ function header({ title, formNo, version, date, related, target }: HeaderArgs) {
 function footer(source: string) {
   return `
 <div class="form-footer">
-  <span>제공: ${esc(source)} | 메디인증(medicerti-v2.vercel.app)</span>
+  <span>제공: ${esc(source)} | 메디인증(medicerti.vercel.app)</span>
   <span>본 서식은 참고용이며 병원 내부 규정에 맞추어 수정 후 활용하십시오.</span>
 </div>
 </div>`;

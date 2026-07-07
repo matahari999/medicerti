@@ -8,7 +8,7 @@ export const HOSPITAL_TYPE_LABELS: Record<string, string> = {
   nursing: '요양병원', psychiatric: '정신병원', rehabilitation: '재활의료기관',
   acute: '급성기병원', dental: '치과병원', korean: '한방병원',
   general: '종합병원', tertiary: '상급종합병원', hospital: '병원',
-  other: '기타 병원', custom: '직접 입력',
+  other: '기타 병원', custom: '직접 입력', basic: '기본(전체 병원급)',
 };
 
 // ─── 문서 유형 ───────────────────────────────────────────────

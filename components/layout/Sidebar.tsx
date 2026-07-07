@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { LayoutDashboard, Building2, Settings, Shield, Sparkles, BookOpen, GraduationCap, MessageCircle, BarChart3, FileText, Bell, CalendarDays } from 'lucide-react'
+import { LayoutDashboard, Building2, Settings, Shield, Sparkles, BookOpen, GraduationCap, MessageCircle, BarChart3, FileText, Bell, CalendarDays, RefreshCw } from 'lucide-react'
+import MediLogo from '@/components/MediLogo'
 import { Separator } from '@/components/ui/separator'
 import { NavItem } from './NavItem'
 import { UserMenu } from './UserMenu'
@@ -10,6 +11,7 @@ const navItems = [
   { href: '/compare',          label: '병원간 비교',  icon: <BarChart3 className="w-4 h-4 shrink-0" /> },
   { href: '/generate',         label: '문서 생성',   icon: <Sparkles className="w-4 h-4 shrink-0" /> },
   { href: '/standards',        label: '인증기준집',  icon: <BookOpen className="w-4 h-4 shrink-0" /> },
+  { href: '/updates',          label: '업데이트',    icon: <RefreshCw className="w-4 h-4 shrink-0" /> },
   { href: '/education',        label: '교육 관리',   icon: <GraduationCap className="w-4 h-4 shrink-0" /> },
   { href: '/consulting',       label: '컨설팅',      icon: <MessageCircle className="w-4 h-4 shrink-0" /> },
   { href: '/reports',          label: '보고서',      icon: <BarChart3 className="w-4 h-4 shrink-0" /> },
@@ -34,12 +36,10 @@ export function Sidebar({ user }: SidebarProps) {
       {/* 로고 */}
       <div className="p-4 border-b">
         <Link href="/dashboard" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center shrink-0">
-            <span className="text-white font-bold text-sm">A</span>
-          </div>
+          <MediLogo size={32} />
           <div>
-            <p className="font-bold text-gray-900 leading-none">AccrediQ</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">인증 갭 분석 플랫폼</p>
+            <p className="font-bold text-gray-900 leading-none">메디인증</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">의료기관 인증 문서 자동화</p>
           </div>
         </Link>
       </div>
