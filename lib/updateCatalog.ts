@@ -132,6 +132,19 @@ export const UPDATE_ENTRIES: UpdateEntry[] = [
     isImportant: false,
   },
   {
+    id: 'national-safety-checklist',
+    category: 'form',
+    title: '국가안전대진단 의료기관 안전점검표 등록',
+    publishedDate: '2026-07-07',
+    hospitalTypes: [],
+    summary:
+      '보건소 주관 국가안전대진단 합동점검(의료법·건축·소방·전기·가스·승강기 6개 분야) 시 사용되는 점검표. 의료법 분야 16개 항목에는 요양병원 특화 점검(안전 손잡이·비상연락장치·욕실 규격·신체보호대 사용기준)이 포함되므로 점검 전 자체점검 권장. 자료실(QPIC)에서 인쇄용 서식 제공.',
+    affectedDocuments: ['시설안전 자체점검표', '신체보호대 관리 규정 이행 기록', '정전대비 시설 점검 기록'],
+    sourceName: '보건복지부 (보건소 배포)',
+    sourceUrl: '/qpic',
+    isImportant: false,
+  },
+  {
     id: 'hospital-status-form',
     category: 'form',
     title: '의료기관 운영현황 서식 개정 (별지 제23호의6)',

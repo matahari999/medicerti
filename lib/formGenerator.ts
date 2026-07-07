@@ -854,6 +854,68 @@ function makeGeneric(title: string, description: string) {
 </table>`;
 }
 
+// ── 국가안전대진단 의료기관 안전점검표 (보건소 합동점검) ────────────
+function makeQpsTemp5(): string {
+  const row = (gubun: string, span: number, no: string, text: string) => `
+  <tr class="data-r">
+    ${gubun ? `<td class="hd c" rowspan="${span}">${gubun}</td>` : ''}
+    <td class="c">${no}</td><td>${text}</td>
+    <td class="c">☐</td><td class="c">☐</td><td class="c">☐</td><td></td>
+  </tr>`;
+
+  return `
+<div class="sec-title">■ 1. 총괄 점검 개요</div>
+<table class="data">
+  <tr><td class="hd" style="width:90px">점검일시</td><td>(YYYY년&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;일)</td>
+      <td class="hd" style="width:90px">의료기관명</td><td></td></tr>
+  <tr><td class="hd">점검장소(주소)</td><td colspan="3"></td></tr>
+  <tr><td class="hd">면적</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m²</td>
+      <td class="hd">층수(지상/지하)</td><td></td></tr>
+</table>
+
+<div class="sec-title">■ 2. 분야별 점검자 (보건소 합동점검반)</div>
+<table class="data">
+  <tr><th style="width:90px">점검분야</th><th>소속</th><th style="width:70px">직위</th><th style="width:80px">성명</th><th style="width:70px">점검여부(✔)</th></tr>
+  ${['의료법(관할 보건소)','건축','소방','전기','가스','승강기(필요시)'].map(f =>
+    `<tr class="data-r"><td class="c">${f}</td><td></td><td></td><td class="c">(인)</td><td class="c">☐</td></tr>`).join('')}
+</table>
+<table class="data" style="margin-top:4px;">
+  <tr><td class="hd" style="width:120px">확인자(소유자)</td><td class="c" style="width:120px">(인)</td>
+      <td class="hd" style="width:120px">확인자(개설자)</td><td class="c">(인)</td></tr>
+</table>
+<div style="font-size:7.5pt;margin:3px 0 8px;">※ 확인자: 건축물 소유자 서명 원칙(의료법 분야는 개설자). 지적사항은 소유자(민간)·기관장(공공)에게 보고 후 조치.</div>
+
+<div class="sec-title">■ 3. 의료법 분야 안전점검표 (의료법 제36조, 시행규칙 제34조~제39조의6, 별표3·4·4의2)</div>
+<table class="data">
+  <tr><th style="width:80px">구분</th><th style="width:55px">코드</th><th>점검항목</th>
+      <th style="width:38px">양호</th><th style="width:38px">주의</th><th style="width:38px">불량</th><th style="width:60px">비고</th></tr>
+  ${row('입원실', 3, '의료법 01', '입원실 지하층 설치 여부 (지하층 설치 시 부적합)')}
+  ${row('', 0, '의료법 02', '3층 이상 입원실 내화구조 시공 여부')}
+  ${row('', 0, '의료법 03', '입원실의 병상 수 및 이격거리 기준 준수 여부')}
+  ${row('정전대비 시설', 3, '의료법 04', '자가발전시설 설치 여부')}
+  ${row('', 0, '의료법 05', '중환자실 무정전 시스템 설치 여부')}
+  ${row('', 0, '의료법 06', '수술실 예비전원설비 설치 여부')}
+  ${row('이동공간·편의시설', 3, '의료법 07', '휠체어·병상 이동공간 확보 여부')}
+  ${row('', 0, '의료법 08', '침대용 엘리베이터·층간 경사로 설치 여부')}
+  ${row('', 0, '의료법 09', '문턱 경사로 설치 여부')}
+  ${row('안전시설<br>(요양병원)', 4, '의료법 10', '안전 손잡이 설치 여부')}
+  ${row('', 0, '의료법 11', '비상연락장치 설치 및 정상작동 여부')}
+  ${row('', 0, '의료법 12', '요양병원 욕실 시설규격 준수 여부')}
+  ${row('', 0, '의료법 13', '외부 출입구 잠금장치 안전규정 준수 여부')}
+  ${row('신체보호대<br>(요양병원)', 3, '의료법 14', '신체보호대 사용기준 준수 여부')}
+  ${row('', 0, '의료법 15', '응급상황 시 결박 해제가 용이한지 여부')}
+  ${row('', 0, '의료법 16', '신체보호대 사용 교육 연 1회 이상 실시 여부')}
+</table>
+
+<div class="sec-title">■ 4. 지적사항 및 조치계획</div>
+<table class="data">
+  <tr><td class="hd" style="width:100px">지적사항</td><td style="height:55px;vertical-align:top;padding:6px;"></td></tr>
+  <tr><td class="hd">조치계획</td><td style="height:45px;vertical-align:top;padding:6px;"></td></tr>
+  <tr><td class="hd">조치완료 예정일</td><td></td></tr>
+</table>
+<div style="font-size:7.5pt;margin-top:4px;">※ 건축·소방·전기·가스·승강기 분야 상세 점검표는 각 분야 전문기관 합동점검 시 별도 양식으로 진행됩니다.</div>`;
+}
+
 // ── 라우팅 ─────────────────────────────────────────────────────────────
 function getBody(item: QpicItem): string {
   switch (item.id) {
@@ -861,6 +923,7 @@ function getBody(item: QpicItem): string {
     case 'qps-temp-2': return makeQpsTemp2();
     case 'qps-temp-3': return makeQpsTemp3();
     case 'qps-temp-4': return makeQpsTemp4();
+    case 'qps-temp-5': return makeQpsTemp5();
     case 'im-temp-1':  return makeImTemp1();
     case 'im-temp-2':  return makeImTemp2();
     case 'im-temp-3':  return makeImTemp3();

@@ -91,6 +91,15 @@ export const QPIC_DATA: QpicData = {
         hospitalTypes: ['all'],
         fileSize: '35 KB',
         date: '2026-01-22'
+      },
+      {
+        id: 'qps-temp-5',
+        title: '국가안전대진단 의료기관 안전점검표 (보건소 합동점검 대비)',
+        description: '보건소 주관 국가안전대진단 시 사용되는 총괄 점검표(의료법·건축·소방·전기·가스·승강기 6개 분야)와 의료법 분야 16개 점검항목입니다. 입원실·정전대비·안전시설·신체보호대 등 요양병원 특화 항목 포함 — 점검 전 자체점검용으로 활용하세요.',
+        source: '보건복지부',
+        hospitalTypes: ['all'],
+        fileSize: '52 KB',
+        date: '2026-07-07'
       }
     ],
     news: [
