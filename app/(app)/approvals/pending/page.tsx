@@ -12,15 +12,18 @@ import {
   Eye,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useDocumentStore } from '@/stores/documentStore';
+import { useDocumentStore, useApprovalSync } from '@/stores/documentStore';
 import { AdminGate } from '@/components/features/AdminGate';
+import SignaturePad from '@/components/approvals/SignaturePad';
 
 export default function PendingApprovalsPage() {
+  useApprovalSync();
   const { pendingList, approveDocument, rejectDocument } = useDocumentStore();
   const [selectedDoc, setSelectedDoc] = useState<typeof pendingList[0] | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isRejecting, setIsRejecting] = useState(false);
+  const [isSigning, setIsSigning] = useState(false);
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -29,10 +32,12 @@ export default function PendingApprovalsPage() {
     }, 3000);
   };
 
-  const handleApprove = (docId: string) => {
-    approveDocument(docId, '김실무자');
+  // 서명 완료 시 승인 확정 — 서명 이미지는 결재란에 저장·인쇄됨
+  const handleSignAndApprove = (docId: string, signatureData: string) => {
+    approveDocument(docId, '김실무자', signatureData);
     setSelectedDoc(null);
-    showToast('문서 결재가 최종 승인 처리되었습니다.');
+    setIsSigning(false);
+    showToast('서명과 함께 결재가 승인 처리되었습니다.');
   };
 
   const handleReject = (docId: string) => {
@@ -151,6 +156,7 @@ export default function PendingApprovalsPage() {
                   onClick={() => {
                     setSelectedDoc(null);
                     setIsRejecting(false);
+                    setIsSigning(false);
                   }}
                   className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-50"
                 >
@@ -188,8 +194,15 @@ export default function PendingApprovalsPage() {
                 </pre>
               </div>
 
-              {/* 반려 사유 입력 영역 (토글형) */}
-              {isRejecting ? (
+              {/* 서명 승인 영역 (토글형) */}
+              {isSigning ? (
+                <div className="border-t border-slate-100 pt-3 flex-shrink-0">
+                  <SignaturePad
+                    onSave={(dataUrl) => handleSignAndApprove(selectedDoc.id, dataUrl)}
+                    onCancel={() => setIsSigning(false)}
+                  />
+                </div>
+              ) : isRejecting ? (
                 <div className="space-y-2 border-t border-slate-100 pt-3 flex-shrink-0">
                   <label className="block text-xs font-bold text-rose-600">반려 사유 필수 입력</label>
                   <textarea
@@ -232,10 +245,10 @@ export default function PendingApprovalsPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleApprove(selectedDoc.id)}
+                      onClick={() => setIsSigning(true)}
                       className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2 transition-colors cursor-pointer"
                     >
-                      최종 승인
+                      ✍️ 서명하고 승인
                     </button>
                   </div>
                 </div>

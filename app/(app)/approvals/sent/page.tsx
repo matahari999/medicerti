@@ -13,9 +13,10 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useDocumentStore } from '@/stores/documentStore';
+import { useDocumentStore, useApprovalSync } from '@/stores/documentStore';
 
 export default function SentApprovalsPage() {
+  useApprovalSync();
   const { sentList } = useDocumentStore();
   const [selectedDoc, setSelectedDoc] = useState<typeof sentList[0] | null>(null);
 

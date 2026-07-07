@@ -11,13 +11,24 @@ import {
   Filter,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useDocumentStore } from '@/stores/documentStore';
+import { useDocumentStore, useApprovalSync } from '@/stores/documentStore';
+import { buildApprovalPrintHtml } from '@/lib/approvalPrint';
 
 const docTypes = ['전체 구분', '규정집', '지침서', '서식', '대장'];
 const departmentsList = ['전체 부서', 'QPS/감염관리실', '간호부', '행정부', '약제부'];
 
 export default function CompletedApprovalsPage() {
+  useApprovalSync();
   const { completedList } = useDocumentStore();
+
+  // 서명이 결재란에 찍힌 인쇄용 문서 열기
+  const handlePrint = (doc: (typeof completedList)[0]) => {
+    const w = window.open('', '_blank');
+    if (w) {
+      w.document.write(buildApprovalPrintHtml(doc));
+      w.document.close();
+    }
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('전체 구분');
   const [selectedDept, setSelectedDept] = useState('전체 부서');
@@ -157,6 +168,12 @@ export default function CompletedApprovalsPage() {
                       </td>
                       <td>
                         <div className="flex gap-1">
+                          <button
+                            onClick={() => handlePrint(doc)}
+                            className="flex items-center gap-0.5 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded px-2 py-1 transition-colors"
+                          >
+                            🖨 서명본 인쇄
+                          </button>
                           {doc.formats.map((fmt) => (
                             <button
                               key={fmt}

@@ -1,6 +1,7 @@
+import { useEffect } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { DocumentType, CertificationStatus } from '@/types';
+import type { DocumentType } from '@/types';
 
 
 export interface ApprovalStep {
@@ -8,6 +9,7 @@ export interface ApprovalStep {
   name: string;
   status: 'pending' | 'approved' | 'rejected';
   date: string | null;
+  signature?: string | null; // 손글씨 서명 (dataURL)
 }
 
 export interface DocumentApproval {
@@ -27,30 +29,38 @@ export interface DocumentApproval {
   formats: string[];
 }
 
+interface SubmitInput {
+  title: string;
+  type: DocumentType;
+  typeName: string;
+  dept: string;
+  requester: string;
+  content: string;
+  formHtml?: string;
+  steps: { role: string; name: string }[];
+}
+
 interface DocumentStore {
   pendingList: DocumentApproval[];
   sentList: DocumentApproval[];
   completedList: DocumentApproval[];
+  /** true면 Supabase(공유 DB) 모드, false면 데모(브라우저 로컬) 모드 */
+  serverMode: boolean;
+
+  /** 서버에서 결재 목록 동기화 (테이블 미생성 시 데모 모드 유지) */
+  refresh: () => Promise<void>;
 
   // 신규 기안/상신 등록
-  submitForApproval: (doc: {
-    title: string;
-    type: DocumentType;
-    typeName: string;
-    dept: string;
-    requester: string;
-    content: string;
-    steps: { role: string; name: string }[];
-  }) => void;
-  
-  // 승인 처리
-  approveDocument: (docId: string, approverName: string) => void;
-  
+  submitForApproval: (doc: SubmitInput) => void;
+
+  // 승인 처리 (signatureData: 손글씨 서명 dataURL)
+  approveDocument: (docId: string, approverName: string, signatureData?: string) => void;
+
   // 반려 처리
   rejectDocument: (docId: string, rejectReason: string, rejecterName: string) => void;
 }
 
-// 초기 데이터
+// ─── 데모 모드 초기 데이터 ───────────────────────────────────
 const initialPending: DocumentApproval[] = [
   {
     id: 'APP-2026-004',
@@ -211,14 +221,47 @@ const initialCompleted: DocumentApproval[] = [
   },
 ];
 
+const nowStamp = () =>
+  new Date().toISOString().substring(5, 10) + ' ' + new Date().toTimeString().substring(0, 5);
+
 export const useDocumentStore = create<DocumentStore>()(
   persist(
     (set, get) => ({
       pendingList: initialPending,
       sentList: initialSent,
       completedList: initialCompleted,
-      
-      submitForApproval: (doc) => 
+      serverMode: false,
+
+      refresh: async () => {
+        try {
+          const res = await fetch('/api/approvals');
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data.isMock) return; // DB 미설정 — 데모 모드 유지
+          set({
+            serverMode: true,
+            pendingList: data.pending || [],
+            sentList: data.sent || [],
+            completedList: data.completed || [],
+          });
+        } catch {
+          // 네트워크 오류 시 데모 모드 유지
+        }
+      },
+
+      submitForApproval: (doc) => {
+        if (get().serverMode) {
+          void (async () => {
+            await fetch('/api/approvals', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(doc),
+            });
+            await get().refresh();
+          })();
+          return;
+        }
+
         set((state) => {
           const docId = `APP-2026-${String(state.sentList.length + 100).padStart(3, '0')}`;
           const nowStr = new Date().toISOString().split('T')[0];
@@ -245,76 +288,99 @@ export const useDocumentStore = create<DocumentStore>()(
               })),
             ],
           };
-          
+
           return {
             sentList: [newDoc, ...state.sentList],
             pendingList: [newDoc, ...state.pendingList],
           };
-        }),
-        
-      approveDocument: (docId, approverName) => 
+        });
+      },
+
+      approveDocument: (docId, approverName, signatureData) => {
+        if (get().serverMode) {
+          void (async () => {
+            await fetch(`/api/approvals/${encodeURIComponent(docId)}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'approve', signatureData }),
+            });
+            await get().refresh();
+          })();
+          return;
+        }
+
         set((state) => {
           const nextPending = state.pendingList.filter((d) => d.id !== docId);
-          
+
           let approvedDoc: DocumentApproval | null = null;
           const nextSent = state.sentList.map((d) => {
             if (d.id === docId) {
+              // 순차 결재: 첫 번째 대기 단계만 승인
+              let stamped = false;
               const updatedSteps = d.steps.map((step) => {
-                if (step.status === 'pending') {
+                if (!stamped && step.status === 'pending') {
+                  stamped = true;
                   return {
                     ...step,
                     status: 'approved' as const,
-                    date: new Date().toISOString().substring(5, 10) + ' ' + new Date().toTimeString().substring(0, 5),
+                    date: nowStamp(),
+                    signature: signatureData ?? null,
                   };
                 }
                 return step;
               });
-              
+
               const allApproved = updatedSteps.every((step) => step.status === 'approved');
               const status = allApproved ? ('completed' as const) : ('in_progress' as const);
               const statusLabel = allApproved ? '완료' : '검토 중';
-              
-              approvedDoc = {
-                ...d,
-                steps: updatedSteps,
-                status,
-                statusLabel,
-              };
+
+              approvedDoc = { ...d, steps: updatedSteps, status, statusLabel };
               return approvedDoc;
             }
             return d;
           });
-          
+
           const nextCompleted = [...state.completedList];
           if (approvedDoc && (approvedDoc as DocumentApproval).status === 'completed') {
             nextCompleted.unshift(approvedDoc);
           } else if (approvedDoc) {
             nextPending.unshift(approvedDoc);
           }
-          
+
           return {
             pendingList: nextPending,
             sentList: nextSent,
             completedList: nextCompleted,
           };
-        }),
-        
-      rejectDocument: (docId, rejectReason, rejecterName) => 
+        });
+      },
+
+      rejectDocument: (docId, rejectReason, _rejecterName) => {
+        if (get().serverMode) {
+          void (async () => {
+            await fetch(`/api/approvals/${encodeURIComponent(docId)}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'reject', rejectReason }),
+            });
+            await get().refresh();
+          })();
+          return;
+        }
+
         set((state) => {
           const nextPending = state.pendingList.filter((d) => d.id !== docId);
           const nextSent = state.sentList.map((d) => {
             if (d.id === docId) {
+              let stamped = false;
               const updatedSteps = d.steps.map((step) => {
-                if (step.status === 'pending') {
-                  return {
-                    ...step,
-                    status: 'rejected' as const,
-                    date: new Date().toISOString().substring(5, 10) + ' ' + new Date().toTimeString().substring(0, 5),
-                  };
+                if (!stamped && step.status === 'pending') {
+                  stamped = true;
+                  return { ...step, status: 'rejected' as const, date: nowStamp() };
                 }
                 return step;
               });
-              
+
               return {
                 ...d,
                 status: 'rejected' as const,
@@ -325,15 +391,30 @@ export const useDocumentStore = create<DocumentStore>()(
             }
             return d;
           });
-          
+
           return {
             pendingList: nextPending,
             sentList: nextSent,
           };
-        }),
+        });
+      },
     }),
     {
       name: 'medicerti-document-store',
+      // 서버 모드 여부는 매 접속 시 refresh()로 다시 판별
+      partialize: (state) => ({
+        pendingList: state.pendingList,
+        sentList: state.sentList,
+        completedList: state.completedList,
+      }),
     }
   )
 );
+
+/** 결재 페이지 진입 시 서버 동기화 — 각 결재 페이지에서 한 줄로 사용 */
+export function useApprovalSync() {
+  const refresh = useDocumentStore((s) => s.refresh);
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+}

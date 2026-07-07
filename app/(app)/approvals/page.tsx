@@ -12,9 +12,10 @@ import {
   User,
   ArrowRight,
 } from 'lucide-react';
-import { useDocumentStore } from '@/stores/documentStore';
+import { useDocumentStore, useApprovalSync } from '@/stores/documentStore';
 
 export default function ApprovalsDashboard() {
+  useApprovalSync();
   const { pendingList, sentList, completedList } = useDocumentStore();
 
   // 최근 활동 내역: 상신 진행 문서 목록에서 최대 4건 추출
