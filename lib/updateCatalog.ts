@@ -132,13 +132,26 @@ export const UPDATE_ENTRIES: UpdateEntry[] = [
     isImportant: false,
   },
   {
+    id: 'hospital-status-form',
+    category: 'form',
+    title: '의료기관 운영현황 서식 개정 (별지 제23호의6)',
+    publishedDate: '2025-06-20',
+    hospitalTypes: [],
+    summary:
+      '의료법 시행규칙 별지 제23호의6 서식이 2025.6.20. 개정됨. 인증 신청·중간현장조사 시 의료기관평가인증시스템에 입력·제출하는 공식 서식으로, 병원 구분·응급의료기관 유형·설립유형·간호관리료 등급 등 운영현황 전반을 기재. 구버전 서식으로 제출하지 않도록 주의.',
+    affectedDocuments: ['인증신청 제출서류 체크리스트', '의료기관 운영현황표 (최신 서식으로 교체)'],
+    sourceName: '의료법 시행규칙 (인증원 배포)',
+    sourceUrl: 'https://ae.koiha.or.kr',
+    isImportant: false,
+  },
+  {
     id: 'mid-survey-notice',
     category: 'etc',
     title: '중간현장조사 의료기관 안내사항 (요양 3주기·급성기 4주기·재활 2주기·한방 3주기)',
     hospitalTypes: ['nursing', 'acute', 'rehabilitation', 'korean'],
     summary:
-      '인증 유지 중인 기관은 인증 유효기간 중 중간조사(중간현장조사 또는 중간자체조사)를 받아야 함. 주기별 안내문에 조사 절차·준비 서류·일정 협의 방법이 정리되어 있음. 인증 취득이 끝이 아니라 유지 관리가 필요.',
-    affectedDocuments: ['중간조사 자체점검표', '인증 후 개선활동 이행 기록', '지표 모니터링 자료'],
+      '인증 유지 중인 기관은 인증 유효기간 중 중간조사(중간현장조사 또는 중간자체조사)를 받아야 함. 주기별 안내문(요양병원은 2022.12. 개정판이 최신)에 조사 절차·준비 서류·일정 협의 방법이 정리되어 있으며, 의료기관 운영현황 서식을 함께 제출. 인증 취득이 끝이 아니라 유지 관리가 필요.',
+    affectedDocuments: ['중간조사 자체점검표', '의료기관 운영현황표', '인증 후 개선활동 이행 기록', '지표 모니터링 자료'],
     sourceName: '의료기관평가인증원',
     sourceUrl: 'https://ae.koiha.or.kr',
     isImportant: false,
