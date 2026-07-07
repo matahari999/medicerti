@@ -47,6 +47,9 @@ guidelines/**/*.pdf
 guidelines/**/*.hwp
 guidelines/**/*.zip
 
+# 실제 병원 규정집 원문 (병원 실명 포함 — 비식별화된 lib/regulationLibrary.ts만 추적)
+guidelines/hospital-regulations-2021/
+
 # KOIHA 동기화 스크립트
 scripts/koiha-sync/venv/
 scripts/koiha-sync/storage_state.json

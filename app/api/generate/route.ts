@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 import { retrieveRelevantChunks, formatRagContext } from '@/lib/rag';
+import { GEMINI_MODEL } from '@/lib/constants';
+import { findReferenceRegulations, buildReferenceContext, REGULATION_FORMAT_GUIDE } from '@/lib/regulationTemplate';
+
+export const maxDuration = 60;
 
 function getMockResponse(hospitalType: string, hospitalName: string, documentType: string, documentTitle: string) {
       const hospitalTypeLabels: Record<string, string> = {
@@ -93,14 +97,22 @@ export async function POST(request: Request) {
     ]) as Awaited<ReturnType<typeof retrieveRelevantChunks>>;
     const ragContext = formatRagContext(ragChunks);
 
-    // 3. 시스템/유저 프롬프트 준비
+    // 3. 규정집/지침서/매뉴얼: 실제 규정집 라이브러리에서 참조 골격 검색
+    const isRegulationLike = ['regulation', 'guideline', 'manual'].includes(documentType);
+    const referenceRegs = isRegulationLike ? findReferenceRegulations(documentTitle) : [];
+    const referenceContext = buildReferenceContext(referenceRegs);
+
+    // 4. 시스템/유저 프롬프트 준비
     const systemPrompt = `너는 대한민국 의료기관평가인증 기준 및 병원 규정 수립에 정통한 도메인 전문가이자 시니어 병원 행정 컨설턴트이다.
 병원 정보와 요청받은 문서 제목에 맞는 전문성 있고 규격화된 규정집/지침서/서식 초안을 마크다운 포맷으로 작성하라.
 
 반드시 다음 규칙을 최우선으로 지켜라:
 1. 문서 최상단에 대괄호와 함께 "[참고용 초안] 이 문서는 지능형 시스템이 생성한 참고용 초안으로, 법적 효력이 없습니다. 공식 제출 전 반드시 실무 검토가 필요합니다." 라는 한글 고지 문구를 필수 기재하라.
 2. 병원명, 병원 유형의 특성(예: 요양병원의 낙상, 억제대 특화 지침)에 부합하게 작성하라.
-3. 문서 내에 (작성일), (서명) 등 채워 넣어야 하는 실무 플레이스홀더를 제공하라.${ragContext ? `\n\n[인증기준 참조 — RAG 검색 결과]\n${ragContext}` : ''}`;
+3. 문서 내에 (작성일), (서명) 등 채워 넣어야 하는 실무 플레이스홀더를 제공하라.
+4. 문서 제목(H1)과 병원명은 요청받은 값을 한 글자도 바꾸지 말고 그대로 사용하라. 참조 자료의 주제가 요청 제목과 다르면 반드시 요청 제목을 따르라.${
+      isRegulationLike ? `\n${REGULATION_FORMAT_GUIDE}` : ''}${referenceContext}${
+      ragContext ? `\n\n[인증기준 참조 — RAG 검색 결과]\n${ragContext}` : ''}`;
 
     const userPrompt = `병원명: ${hospitalName}
 병원 유형: ${hospitalType}
@@ -108,14 +120,14 @@ export async function POST(request: Request) {
 문서 제목: ${documentTitle}
 추가 요구사항: ${additionalContext || '없음'}`;
 
-    // 4. API 키 유형 식별 및 호출 (신형 'AQ.' 및 구형 'AIza' 접두사 대응)
+    // 5. API 키 유형 식별 및 호출 (신형 'AQ.' 및 구형 'AIza' 접두사 대응)
     const isGemini = apiKey.startsWith('AIza') || apiKey.startsWith('AQ.') || !!process.env.GEMINI_API_KEY;
     let resultText = '';
 
     if (isGemini) {
-      // Google Gemini API 호출 (gemini-1.5-pro 모델)
-      const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent';
-      const response = await fetch(geminiUrl, {
+      // Google Gemini API 호출 (gemini-1.5-pro는 서비스 종료 — 최신 모델 상수 사용)
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+      const callGemini = () => fetch(geminiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -140,11 +152,18 @@ export async function POST(request: Request) {
           },
           generationConfig: {
             temperature: 0.2,
-            maxOutputTokens: 2500
+            maxOutputTokens: isRegulationLike ? 8000 : 2500
           }
         }),
-        signal: AbortSignal.timeout(20000), // 20초 타임아웃
+        signal: AbortSignal.timeout(45000), // 45초 타임아웃 (규정집은 분량이 큼)
       });
+
+      let response = await callGemini();
+      if (response.status === 503) {
+        // 모델 일시 과부하 — 2초 후 1회 재시도
+        await new Promise((r) => setTimeout(r, 2000));
+        response = await callGemini();
+      }
 
       if (!response.ok) {
         const isQuotaError = response.status === 429;
@@ -163,8 +182,8 @@ export async function POST(request: Request) {
           'content-type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 2500,
+          model: 'claude-sonnet-5',
+          max_tokens: isRegulationLike ? 8000 : 2500,
           messages: [
             {
               role: 'user',
@@ -173,7 +192,7 @@ export async function POST(request: Request) {
           ],
           system: systemPrompt,
         }),
-        signal: AbortSignal.timeout(20000), // 20초 타임아웃
+        signal: AbortSignal.timeout(45000), // 45초 타임아웃 (규정집은 분량이 큼)
       });
 
       if (!response.ok) {
