@@ -1,5 +1,12 @@
-import { createServiceClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import type { DocumentApproval, ApprovalStep } from '@/stores/documentStore';
+
+// 서비스 키가 설정돼 있으면 사용(RLS 우회), 없으면 요청자 세션 기반 클라이언트
+async function getDb() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createServiceClient()
+    : createClient();
+}
 
 // 테이블 미생성/DB 미설정 시 데모(localStorage) 모드로 폴백하기 위한 판별
 function isTableMissing(e: unknown): boolean {
@@ -78,7 +85,7 @@ const SELECT = '*, approval_steps(*)';
 
 export async function listApprovals() {
   try {
-    const supabase = await createServiceClient();
+    const supabase = await getDb();
     const { data, error } = await supabase
       .from('approval_documents')
       .select(SELECT)
@@ -108,7 +115,7 @@ export async function createApproval(input: {
   steps: { role: string; name: string }[];
 }) {
   try {
-    const supabase = await createServiceClient();
+    const supabase = await getDb();
     const docNo = `APP-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
     const { data: doc, error } = await supabase
       .from('approval_documents')
@@ -149,7 +156,7 @@ export async function decideApproval(input: {
   rejectReason?: string;
 }) {
   try {
-    const supabase = await createServiceClient();
+    const supabase = await getDb();
     const { data, error } = await supabase
       .from('approval_documents')
       .select(SELECT)
