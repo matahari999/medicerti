@@ -261,6 +261,8 @@ export default function GeneratePage() {
   // 규정 생성 시 함께 안내되는 딸린 서식 세트 (현행 인증기준 요구 서식 + 참조 규정 부록)
   const [linkedForms, setLinkedForms] = useState<string[]>([]);
   const [currentStandard, setCurrentStandard] = useState<{ number: string; title: string } | null>(null);
+  // 서식류 생성 시 인쇄용 HTML (결재란·문서번호 포함)
+  const [formHtml, setFormHtml] = useState<string | null>(null);
   
   // 편집기 모드 상태
   const [isEditing, setIsEditing] = useState(false);
@@ -337,6 +339,7 @@ export default function GeneratePage() {
         setLinkedForms(resJson.linkedForms || []);
         setCurrentStandard(resJson.currentStandard || null);
       }
+      setFormHtml(resJson.formHtml || null);
       
       // 편집용 상태도 미리 설정
       setEditorContent(resJson.result);
@@ -453,6 +456,20 @@ export default function GeneratePage() {
                     생성된 지능형 초안
                   </h3>
                   <div className="flex items-center gap-2">
+                    {formHtml && (
+                      <button
+                        onClick={() => {
+                          const w = window.open('', '_blank');
+                          if (w) {
+                            w.document.write(formHtml);
+                            w.document.close();
+                          }
+                        }}
+                        className="flex items-center gap-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg px-3 py-2 cursor-pointer shadow-sm"
+                      >
+                        🖨 서식 인쇄/PDF
+                      </button>
+                    )}
                     {/* 편집기 연동 핵심 액션 버튼 */}
                     <button
                       onClick={() => setIsEditing(true)}

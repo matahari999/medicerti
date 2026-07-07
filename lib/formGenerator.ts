@@ -937,6 +937,47 @@ function getBody(item: QpicItem): string {
   }
 }
 
+// ── AI 생성 서식 래퍼: 본문 HTML을 받아 결재란·문서번호 헤더가 있는 인쇄용 서식으로 완성 ──
+export function generateCustomFormHtml(opts: {
+  title: string;
+  hospitalName: string;
+  related: string; // 관련 인증기준·법적 근거 (헤더 표기용)
+  target: string;  // 적용 부서/대상
+  bodyHtml: string;
+}): string {
+  const formNo = `${opts.hospitalName.slice(0, 2).toUpperCase() || 'MED'}-FORM-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}`;
+  return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(opts.title)}</title>
+${CSS}
+</head>
+<body>
+${header({
+  title: opts.title,
+  formNo,
+  version: 'Rev.1',
+  date: new Date().toISOString().slice(0, 10),
+  related: opts.related,
+  target: opts.target,
+})}
+${opts.bodyHtml}
+${footer(`${opts.hospitalName} (지능형 초안 — 실무 검토 후 사용)`)}
+<script>
+  const btn = document.createElement('button');
+  btn.textContent = '🖨 인쇄 / PDF 저장';
+  btn.style.cssText = 'position:fixed;top:10px;right:10px;padding:8px 16px;background:#1f3864;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;z-index:9999;';
+  btn.onclick = () => window.print();
+  window.addEventListener('beforeprint', () => btn.style.display = 'none');
+  window.addEventListener('afterprint', () => btn.style.display = '');
+  document.body.appendChild(btn);
+</script>
+</body>
+</html>`;
+}
+
 export function generateFormHtml(item: QpicItem): string {
   const targetLabel = item.hospitalTypes
     .map(t => HOSPITAL_TYPE_LABELS[t] || t)

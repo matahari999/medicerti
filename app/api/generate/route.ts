@@ -2,6 +2,38 @@ import { NextResponse } from 'next/server';
 import { retrieveRelevantChunks, formatRagContext } from '@/lib/rag';
 import { GEMINI_MODEL } from '@/lib/constants';
 import { findReferenceRegulations, buildReferenceContext, findCurrentStandardItem, getLinkedForms, REGULATION_FORMAT_GUIDE } from '@/lib/regulationTemplate';
+import { generateCustomFormHtml } from '@/lib/formGenerator';
+
+// AI가 만든 서식 본문 HTML 정제: 코드펜스 제거 + 스크립트/이벤트 핸들러 차단
+function sanitizeFormBody(raw: string): string {
+  return raw
+    .replace(/```(?:html)?/g, '')
+    .replace(/<\/?(?:html|head|body|!doctype)[^>]*>/gi, '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/\son\w+\s*=\s*"[^"]*"/gi, '')
+    .replace(/\son\w+\s*=\s*'[^']*'/gi, '')
+    .trim();
+}
+
+const FORM_FORMAT_GUIDE = `
+[실무 서식 작성 규칙 — 반드시 지킬 것]
+너의 응답은 인쇄용 서식의 "본문 HTML"만이어야 한다. 마크다운·설명 문장·코드펜스 없이 HTML만 출력하라.
+(문서 상단 제목/문서번호/결재란은 시스템이 자동으로 붙이므로 만들지 마라)
+
+허용 마크업:
+- 섹션 제목: <div class="sec-title">■ 1. 섹션명</div>
+- 표: <table class="data"> / 헤더행 <tr><th>..</th></tr> / 데이터행 <tr class="data-r"> / 라벨셀 <td class="hd"> / 가운데정렬 <td class="c"> / colspan·rowspan 사용 가능
+- 체크박스는 ☐, 서명란은 (인), 날짜는 (YYYY년  월  일), 빈 기재란은 빈 <td></td>
+- 인라인 style은 width·height·text-align·vertical-align·padding만 허용
+
+서식 구성 순서:
+1) 기본정보 표 — 문서 성격에 맞는 식별 정보(예: 환자명/등록번호/병동/평가일, 또는 부서/점검일/점검자)
+2) 본문 기재 표 — 평가·점검·기록 항목을 행으로, 판정/체크 열 포함. 실무에서 바로 쓸 수 있게 항목을 구체적으로 채워라 (빈 껍데기 금지)
+3) 종합 의견·조치사항 기재란
+4) 서명란 표 (작성자/확인자, (인) 표기)
+5) 마지막에 <div class="sec-title">■ 관련 근거</div> + 근거 표: 관련 법령 조항(의료법 시행규칙·환자안전법 등 실제 조문)과 인증기준 번호를 행으로 명시
+`;
 
 export const maxDuration = 60;
 
@@ -100,15 +132,21 @@ export async function POST(request: Request) {
     // 3. 규정집/지침서/매뉴얼: 실제 규정집 라이브러리에서 참조 골격 검색
     //    + 현행(최신 주기) 인증기준을 찾아 우선 기준으로 주입 (2021 참조 규정은 구 주기이므로 갱신 지시)
     const isRegulationLike = ['regulation', 'guideline', 'manual'].includes(documentType);
-    const referenceRegs = isRegulationLike ? findReferenceRegulations(documentTitle) : [];
-    const currentStd = isRegulationLike
+    const isFormLike = ['form', 'checklist', 'record'].includes(documentType);
+    const referenceRegs = (isRegulationLike || isFormLike) ? findReferenceRegulations(documentTitle) : [];
+    const currentStd = (isRegulationLike || isFormLike)
       ? findCurrentStandardItem(hospitalType, documentTitle, referenceRegs)
       : null;
     const referenceContext = buildReferenceContext(referenceRegs, currentStd);
     const linkedForms = isRegulationLike ? getLinkedForms(currentStd, referenceRegs) : [];
 
     // 4. 시스템/유저 프롬프트 준비
-    const systemPrompt = `너는 대한민국 의료기관평가인증 기준 및 병원 규정 수립에 정통한 도메인 전문가이자 시니어 병원 행정 컨설턴트이다.
+    const systemPrompt = isFormLike
+      ? `너는 대한민국 의료기관 인증 실무 서식(법정서식·평가지·점검표·기록지·대장) 설계 전문가이다.
+요청받은 서식 제목에 맞는, 병원 현장에서 바로 인쇄해 쓰는 실무 서식의 본문을 작성하라.
+문서 제목과 병원명은 요청받은 값을 그대로 사용하고, 병원 유형 특성을 반영하라.
+${FORM_FORMAT_GUIDE}${referenceContext}`
+      : `너는 대한민국 의료기관평가인증 기준 및 병원 규정 수립에 정통한 도메인 전문가이자 시니어 병원 행정 컨설턴트이다.
 병원 정보와 요청받은 문서 제목에 맞는 전문성 있고 규격화된 규정집/지침서/서식 초안을 마크다운 포맷으로 작성하라.
 
 반드시 다음 규칙을 최우선으로 지켜라:
@@ -157,7 +195,7 @@ export async function POST(request: Request) {
           },
           generationConfig: {
             temperature: 0.2,
-            maxOutputTokens: isRegulationLike ? 8000 : 2500
+            maxOutputTokens: isRegulationLike ? 8000 : isFormLike ? 5000 : 2500
           }
         }),
         signal: AbortSignal.timeout(45000), // 45초 타임아웃 (규정집은 분량이 큼)
@@ -213,9 +251,27 @@ export async function POST(request: Request) {
       throw new Error('API 응답 텍스트가 비어 있습니다.');
     }
 
+    // 서식류: AI 본문 HTML을 결재란·문서번호 헤더가 있는 인쇄용 서식으로 완성
+    let formHtml: string | null = null;
+    if (isFormLike) {
+      const bodyHtml = sanitizeFormBody(resultText);
+      if (bodyHtml.includes('<table')) {
+        formHtml = generateCustomFormHtml({
+          title: documentTitle,
+          hospitalName,
+          related: currentStd ? `인증기준 ${currentStd.itemNumber} ${currentStd.itemTitle}` : '의료기관 인증기준',
+          target: additionalContext?.includes('부서') ? '해당 부서' : '전 부서',
+          bodyHtml,
+        });
+        const sections = [...bodyHtml.matchAll(/■ ?[^<]{2,40}/g)].map((m) => m[0].trim());
+        resultText = `✅ 인쇄용 실무 서식이 생성되었습니다.\n\n오른쪽 위 [🖨 서식 인쇄/PDF] 버튼을 누르면 결재란·문서번호가 포함된 인쇄용 양식이 열립니다.\n\n서식 구성:\n${sections.map((s) => ` ${s}`).join('\n')}\n\n※ 참고용 초안입니다. 실무 검토 후 사용하세요.`;
+      }
+    }
+
     return NextResponse.json({
       result: resultText,
       isMock: false,
+      formHtml,
       linkedForms,
       currentStandard: currentStd
         ? { number: currentStd.itemNumber, title: currentStd.itemTitle }
