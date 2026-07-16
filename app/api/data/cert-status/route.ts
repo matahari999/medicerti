@@ -27,7 +27,7 @@ function parseXmlItems(xml: string): any[] {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const searchWord = searchParams.get("q") || "";
-  const apiKey = process.env.DATA_GO_KR_API_KEY || process.env.HIRA_API_KEY;
+  const apiKey = process.env.DATA_GO_KR_API_KEY || process.env.HIRA_API_KEY || process.env.PUBLIC_DATA_API_KEY;
   const referenceDate = new Date().toISOString().split("T")[0];
 
   if (!apiKey) {

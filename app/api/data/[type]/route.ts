@@ -65,7 +65,7 @@ export async function GET(
   const { searchParams } = new URL(request.url);
   const searchWord = searchParams.get('q') || '';
 
-  const apiKey = process.env.DATA_GO_KR_API_KEY || process.env.HIRA_API_KEY;
+  const apiKey = process.env.DATA_GO_KR_API_KEY || process.env.HIRA_API_KEY || process.env.PUBLIC_DATA_API_KEY;
   const mockList = mockDataMap[type] || [];
 
   // 1. API 키가 없거나 플레이스홀더인 경우 Mock 반환

@@ -90,9 +90,13 @@ export default async function AdminHospitalDetailPage({
         canWrite
       />
 
-      {/* AI 규정집 상세 자동 생성 (인증기준 카탈로그 기반, 미검증 AI 초안 — 관리자 전용) */}
+      {/* AI 규정집 상세 자동 생성 — 마스터 원문 근거 기반 (관리자용 테스트 진입점, 병원 화면에도 동일 기능 제공) */}
       <div className="bg-white rounded-xl border p-6 space-y-3">
-        <RegulationBatchGenerator hospitalId={hospitalId} hospitalName={hospital.name} />
+        <RegulationBatchGenerator
+          hospitalId={hospitalId}
+          hospitalName={hospital.name}
+          hospitalType={hospital.type}
+        />
       </div>
 
       {/* 멤버 목록 */}

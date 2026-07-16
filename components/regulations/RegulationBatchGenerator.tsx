@@ -7,9 +7,23 @@ import { Button } from '@/components/ui/button'
 interface Props {
   hospitalId?: string
   hospitalName?: string
+  hospitalType?: string
 }
 
-export function RegulationBatchGenerator({ hospitalId, hospitalName }: Props) {
+const TYPE_COPY: Record<string, { label: string; cycle: string; basis: string }> = {
+  long_term_care: {
+    label: '요양병원',
+    cycle: '4주기 요양병원 인증 기준',
+    basis: '실제 요양병원 인증 규정집 원문(43종)',
+  },
+  psychiatric: {
+    label: '정신병원',
+    cycle: '정신의료기관 평가기준(표준지침서)',
+    basis: '실제 인증 정신병원 규정집 원문 기반 마스터 템플릿',
+  },
+}
+
+export function RegulationBatchGenerator({ hospitalId, hospitalName, hospitalType }: Props) {
   const [generating, setGenerating] = useState(false)
   const [result, setResult] = useState<{
     total: number; generated: number; created: number
@@ -26,7 +40,7 @@ export function RegulationBatchGenerator({ hospitalId, hospitalName }: Props) {
       const res = await fetch('/api/generate/regulations-batch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hospitalId: hospitalId ?? '', catalogType: 'nursing' }),
+        body: JSON.stringify({ hospitalId: hospitalId ?? '' }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
@@ -47,9 +61,11 @@ export function RegulationBatchGenerator({ hospitalId, hospitalName }: Props) {
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold text-violet-900">규정집 상세 자동 생성</h3>
           <p className="text-xs text-violet-700 mt-0.5">
-            4주기 요양병원 인증 기준({hospitalName ?? '요양병원'})을 분석하여
+            {(TYPE_COPY[hospitalType ?? ''] ?? TYPE_COPY.long_term_care).cycle}
+            ({hospitalName ?? (TYPE_COPY[hospitalType ?? ''] ?? TYPE_COPY.long_term_care).label})을 분석하고,
+            {' '}{(TYPE_COPY[hospitalType ?? ''] ?? TYPE_COPY.long_term_care).basis}을 근거로
             실제 병원에서 즉시 사용 가능한 상세 규정집을 AI가 작성합니다.
-            각 규정은 목적, 적용범위, 용어정의, 책임과 권한, 세부 절차, 관련 양식을 포함합니다.
+            각 규정은 목적, 적용범위, 용어정의, 책임과 권한, 세부 절차, 관련 양식과 법령 근거를 포함합니다.
           </p>
         </div>
       </div>
@@ -74,7 +90,7 @@ export function RegulationBatchGenerator({ hospitalId, hospitalName }: Props) {
             <span className="font-medium">규정집 생성 중...</span>
           </div>
           <p className="text-xs text-violet-600">
-            Gemini AI가 4주기 요양병원 인증 기준을 분석하여 상세 규정집을 작성하고 있습니다.
+            Gemini AI가 {(TYPE_COPY[hospitalType ?? ''] ?? TYPE_COPY.long_term_care).cycle}과 실제 규정집 원문을 분석하여 상세 규정집을 작성하고 있습니다.
             각 규정마다 제1조(목적)부터 관련 양식까지 완전한 문서 형태로 생성됩니다.
           </p>
           <div className="w-full bg-violet-200 rounded-full h-1.5">

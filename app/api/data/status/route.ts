@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   const typeFilter = searchParams.get('type') || '';
   const statusFilter = searchParams.get('status') || '';
 
-  const apiKey = process.env.HIRA_API_KEY || process.env.DATA_GO_KR_API_KEY;
+  const apiKey = process.env.HIRA_API_KEY || process.env.DATA_GO_KR_API_KEY || process.env.PUBLIC_DATA_API_KEY;
 
   // 1. API 키가 없거나 플레이스홀더인 경우 Mock 데이터 필터링 후 즉시 반환
   if (!apiKey || apiKey.includes('your-hira') || apiKey.includes('placeholder')) {

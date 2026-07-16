@@ -72,7 +72,7 @@ export default async function UpdatesPage({ searchParams }: Props) {
         <div className="flex items-center gap-2 flex-wrap">
           <Filter size={14} className="text-slate-400" />
           <Link
-            href="/updates"
+            href="/admin/updates"
             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
               !activeCategory
                 ? 'bg-blue-600 text-white border-blue-600'
@@ -84,7 +84,7 @@ export default async function UpdatesPage({ searchParams }: Props) {
           {CATEGORY_KEYS.map((key) => (
             <Link
               key={key}
-              href={`/updates?category=${key}`}
+              href={`/admin/updates?category=${key}`}
               className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                 activeCategory === key
                   ? 'bg-blue-600 text-white border-blue-600'

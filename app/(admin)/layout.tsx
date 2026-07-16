@@ -60,6 +60,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             인증기준 관리
           </Link>
           <Link
+            href="/admin/updates"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-[13.5px] font-medium text-slate-400 hover:bg-white/[0.05] hover:text-slate-100 transition-colors"
+          >
+            업데이트 관리
+          </Link>
+          <Link
             href="/admin/tools"
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-[13.5px] font-medium text-slate-400 hover:bg-white/[0.05] hover:text-slate-100 transition-colors"
           >

@@ -251,7 +251,7 @@ export async function GET(request: Request) {
   const typeFilter = searchParams.get('type') || '';
   const regionFilter = searchParams.get('region') || '';
 
-  const apiKey = process.env.DATA_GO_KR_API_KEY || process.env.HIRA_API_KEY;
+  const apiKey = process.env.DATA_GO_KR_API_KEY || process.env.HIRA_API_KEY || process.env.PUBLIC_DATA_API_KEY;
 
   // 1. API 키가 유효하지 않거나 플레이스홀더인 경우 Mock 데이터 처리
   if (!apiKey || apiKey.includes('your-') || apiKey.includes('placeholder')) {
