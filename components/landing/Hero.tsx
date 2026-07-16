@@ -17,7 +17,7 @@ const statusMock = [
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden bg-sidebar pt-20">
+    <section className="font-gulim relative min-h-screen flex items-center overflow-hidden bg-sidebar pt-20">
       {/* Grid bg */}
       <div className="absolute inset-0 bg-grid opacity-50 pointer-events-none" />
 
@@ -38,7 +38,7 @@ export function Hero() {
               의료기관인증 갭 분석 플랫폼
             </div>
 
-            <h1 className="font-jalnan text-4xl sm:text-5xl lg:text-[3.75rem] font-bold text-white leading-[1.15] text-balance tracking-tight">
+            <h1 className="font-jalnan text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-[1.15] text-balance">
               인증 기준,
               <br />
               <span className="bg-gradient-to-r from-teal-300 via-teal-400 to-emerald-400 bg-clip-text text-transparent">서류 더미</span>에서

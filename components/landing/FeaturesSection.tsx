@@ -164,10 +164,10 @@ const features = [
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-24 lg:py-32 bg-[#081226]">
+    <section id="features" className="font-gulim py-24 lg:py-32 bg-[#081226]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Reveal className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="font-jalnan text-3xl sm:text-4xl font-bold text-white">
+          <h2 className="font-jalnan text-2xl sm:text-3xl font-bold text-white">
             하나의 플랫폼에서
             <br />
             <span className="text-teal-300">인증 준비 전 과정</span>을
@@ -190,7 +190,7 @@ export function FeaturesSection() {
                   <span className="w-px h-3 bg-white/30" />
                   <span>Feature</span>
                 </div>
-                <h3 className="font-jalnan text-2xl sm:text-3xl font-bold text-white tracking-tight">{f.title}</h3>
+                <h3 className="font-jalnan text-xl sm:text-2xl font-bold text-white">{f.title}</h3>
                 <p className="text-base text-slate-400 leading-relaxed">{f.desc}</p>
               </div>
 

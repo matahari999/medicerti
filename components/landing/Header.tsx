@@ -22,7 +22,7 @@ export function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`font-gulim fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
           ? 'bg-[#0a1830]/85 backdrop-blur-xl shadow-lg shadow-black/20 border-b border-white/[0.08]'
           : 'bg-transparent'

@@ -3,7 +3,7 @@ import { Reveal } from './Reveal'
 
 export function CTASection() {
   return (
-    <section className="py-24 lg:py-32 relative overflow-hidden">
+    <section className="font-gulim py-24 lg:py-32 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-sidebar" />
       <div className="absolute inset-0 bg-grid opacity-40 pointer-events-none" />
@@ -11,7 +11,7 @@ export function CTASection() {
       <div className="absolute -bottom-24 -right-24 w-[400px] h-[400px] bg-navy-500/25 rounded-full blur-3xl" />
 
       <Reveal className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="font-jalnan text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight text-balance tracking-tight">
+        <h2 className="font-jalnan text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight text-balance">
           지금 바로
           <br />
           인증 준비를 시작하세요

@@ -58,10 +58,10 @@ const plans = [
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-24 lg:py-32 bg-[#081226]">
+    <section id="pricing" className="font-gulim py-24 lg:py-32 bg-[#081226]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Reveal className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="font-jalnan text-3xl sm:text-4xl font-bold text-white">
+          <h2 className="font-jalnan text-2xl sm:text-3xl font-bold text-white">
             병원 규모에 맞는
             <br />
             <span className="text-teal-300">가격 플랜</span>

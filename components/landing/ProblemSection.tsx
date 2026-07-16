@@ -26,11 +26,11 @@ const problems = [
 
 export function ProblemSection() {
   return (
-    <section className="relative py-24 lg:py-32 bg-[#0a1830] overflow-hidden">
+    <section className="font-gulim relative py-24 lg:py-32 bg-[#0a1830] overflow-hidden">
       <div className="absolute inset-0 bg-grid opacity-30 pointer-events-none" />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Reveal className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="font-jalnan text-3xl sm:text-4xl font-bold text-white">
+          <h2 className="font-jalnan text-2xl sm:text-3xl font-bold text-white">
             왜 요양병원 인증 준비가
             <br />
             <span className="text-teal-300">어려운가요?</span>

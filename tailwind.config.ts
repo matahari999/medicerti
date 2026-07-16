@@ -82,6 +82,7 @@ const config: Config = {
         serif: ['var(--font-gowun-batang)', 'ui-serif', 'Georgia', 'serif'],
         jalnan: ['var(--font-jalnan)', 'ui-sans-serif', 'sans-serif'],
         pretendard: ['var(--font-pretendard)', 'var(--font-inter)', 'ui-sans-serif', 'sans-serif'],
+        gulim: ['굴림', 'Gulim', 'GulimChe', 'ui-sans-serif', 'sans-serif'],
       },
       borderRadius: {
         lg: 'var(--radius)',
