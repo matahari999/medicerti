@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { fillRegulationTemplate } from '@/lib/gemini/regulation-template-fill'
+import { isPlatformAdmin } from '@/lib/services/admin.service'
 import type { Hospital, RegulationTemplate } from '@/types/database.types'
 
 /**
@@ -11,6 +12,11 @@ export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })
+
+  // 병원 맞춤 규정집 자동 커스터마이징은 아직 파일럿 단계라 플랫폼 관리자만 사용 가능
+  if (!(await isPlatformAdmin())) {
+    return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
+  }
 
   const body = await request.json() as {
     hospitalId: string

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { FileText } from 'lucide-react'
 import { requireHospitalMember } from '@/lib/auth'
 import { getHospital } from '@/lib/services/hospital.service'
+import { isPlatformAdmin } from '@/lib/services/admin.service'
 import {
   getManagedDocuments,
   getManagedDocStats,
@@ -30,10 +31,14 @@ export default async function ManagedDocsPage({ params }: Props) {
   const hospital = await getHospital(hospitalId)
   if (!hospital) notFound()
 
+  const showRegulationBoard = await isPlatformAdmin()
+
   const [docs, stats, templateItems] = await Promise.all([
     getManagedDocuments(hospitalId),
     getManagedDocStats(hospitalId),
-    getRegulationTemplatesWithStatus(hospitalId, hospital.type),
+    showRegulationBoard
+      ? getRegulationTemplatesWithStatus(hospitalId, hospital.type)
+      : Promise.resolve([]),
   ])
 
   return (
@@ -56,11 +61,13 @@ export default async function ManagedDocsPage({ params }: Props) {
         </div>
       </div>
 
-      <RegulationTemplateBoard
-        hospitalId={hospitalId}
-        items={templateItems}
-        canWrite={['admin', 'manager'].includes(role)}
-      />
+      {showRegulationBoard && (
+        <RegulationTemplateBoard
+          hospitalId={hospitalId}
+          items={templateItems}
+          canWrite={['admin', 'manager'].includes(role)}
+        />
+      )}
 
       <ManagedDocList
         hospitalId={hospitalId}
