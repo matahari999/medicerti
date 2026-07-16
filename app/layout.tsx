@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter, Gowun_Dodum, Gowun_Batang } from 'next/font/google'
+import localFont from 'next/font/local'
 import './globals.css'
 
 const inter = Inter({
@@ -22,6 +23,19 @@ const gowunBatang = Gowun_Batang({
   display: 'swap',
 })
 
+const jalnanGothic = localFont({
+  src: './fonts/JalnanGothic.ttf',
+  variable: '--font-jalnan',
+  display: 'swap',
+})
+
+const pretendardSemiBold = localFont({
+  src: './fonts/Pretendard-SemiBold.ttf',
+  weight: '600',
+  variable: '--font-pretendard',
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
   title: {
     default: 'AccrediQ',
@@ -41,7 +55,7 @@ export default function RootLayout({
       <head>
         <meta name="color-scheme" content="light dark" />
       </head>
-      <body className={`${inter.variable} ${gowunDodum.variable} ${gowunBatang.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${gowunDodum.variable} ${gowunBatang.variable} ${jalnanGothic.variable} ${pretendardSemiBold.variable} font-sans antialiased`}>
         {children}
       </body>
     </html>

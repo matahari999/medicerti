@@ -53,14 +53,14 @@ function SealIcon() {
 
 export function TrustSection() {
   return (
-    <section className="py-24 lg:py-32 bg-white">
+    <section className="py-24 lg:py-32 bg-[#0a1830]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Reveal className="text-center max-w-2xl mx-auto mb-14">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-gray-900">
+          <h2 className="font-jalnan text-3xl sm:text-4xl font-bold text-white">
             설계 철학 —{' '}
-            <span className="text-[#0d9488]">왜 이 구조인가</span>
+            <span className="text-teal-300">왜 이 구조인가</span>
           </h2>
-          <p className="mt-4 text-lg text-gray-500">
+          <p className="mt-4 text-lg text-slate-400">
             메디인증은 실제 의료기관 인증 심사 경험과 의료법 체계를 기반으로 설계되었습니다
           </p>
         </Reveal>
@@ -71,15 +71,15 @@ export function TrustSection() {
             {badges.map((b) => (
               <div
                 key={b.label}
-                className="flex flex-col items-center text-center gap-3 p-6 rounded-2xl bg-gradient-to-b from-[#f0fdfa] to-white border border-[#99f6e4]/50 shadow-card hover:shadow-elevated hover:-translate-y-0.5 transition-all duration-300"
+                className="flex flex-col items-center text-center gap-3 p-6 rounded-2xl bg-white/[0.05] backdrop-blur-xl border border-white/10 shadow-elevated hover:bg-white/[0.07] hover:-translate-y-0.5 transition-all duration-300"
               >
                 <div className="relative w-12 h-12 drop-shadow-[0_4px_10px_rgba(13,148,136,0.35)]">
                   <SealIcon />
                   <BadgeCheck className="absolute inset-0 m-auto w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <div className="text-lg font-bold text-gray-900 tracking-tight">{b.stat}</div>
-                  <div className="text-xs text-gray-500 mt-0.5 leading-snug">{b.label}</div>
+                  <div className="text-lg font-bold text-white tracking-tight">{b.stat}</div>
+                  <div className="text-xs text-slate-400 mt-0.5 leading-snug">{b.label}</div>
                 </div>
               </div>
             ))}
@@ -88,13 +88,13 @@ export function TrustSection() {
 
         <div className="grid sm:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {points.map((p, i) => (
-            <Reveal key={p.title} delay={i * 90} className="flex gap-4 p-5 rounded-2xl hover:bg-[#f0fdfa]/50 transition-colors duration-300">
-              <div className="w-11 h-11 bg-gradient-to-br from-[#f0fdfa] to-[#ccfbf1] rounded-xl flex items-center justify-center shrink-0 mt-0.5 ring-1 ring-[#99f6e4]/40">
-                <p.icon className="w-5 h-5 text-[#0d9488]" />
+            <Reveal key={p.title} delay={i * 90} className="flex gap-4 p-5 rounded-2xl hover:bg-white/[0.04] transition-colors duration-300">
+              <div className="w-11 h-11 bg-white/[0.06] rounded-xl flex items-center justify-center shrink-0 mt-0.5 ring-1 ring-teal-400/20">
+                <p.icon className="w-5 h-5 text-teal-300" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-gray-900 mb-1.5">{p.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{p.desc}</p>
+                <h3 className="text-base font-semibold text-white mb-1.5">{p.title}</h3>
+                <p className="text-sm text-slate-400 leading-relaxed">{p.desc}</p>
               </div>
             </Reveal>
           ))}

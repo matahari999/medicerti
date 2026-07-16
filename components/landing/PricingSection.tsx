@@ -58,15 +58,15 @@ const plans = [
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-24 lg:py-32 bg-gray-50/50">
+    <section id="pricing" className="py-24 lg:py-32 bg-[#081226]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Reveal className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-gray-900">
+          <h2 className="font-jalnan text-3xl sm:text-4xl font-bold text-white">
             병원 규모에 맞는
             <br />
-            <span className="text-[#0d9488]">가격 플랜</span>
+            <span className="text-teal-300">가격 플랜</span>
           </h2>
-          <p className="mt-4 text-lg text-gray-500">
+          <p className="mt-4 text-lg text-slate-400">
             모든 플랜 14일 무료 체험 — 신용카드 필요 없음
           </p>
         </Reveal>
@@ -76,10 +76,10 @@ export function PricingSection() {
             <Reveal
               key={plan.name}
               delay={i * 100}
-              className={`relative h-full bg-white rounded-2xl border p-6 lg:p-8 flex flex-col transition-all duration-300 ${
+              className={`relative h-full bg-white/[0.05] backdrop-blur-xl rounded-2xl border p-6 lg:p-8 flex flex-col transition-all duration-300 ${
                 plan.popular
-                  ? 'border-[#0d9488] shadow-elevated shadow-[#0d9488]/10 ring-1 ring-[#0d9488] scale-[1.02] lg:scale-105'
-                  : 'border-gray-200/70 shadow-card hover:shadow-card-hover hover:-translate-y-1'
+                  ? 'border-[#0d9488] shadow-elevated shadow-[#0d9488]/20 ring-1 ring-[#0d9488] scale-[1.02] lg:scale-105'
+                  : 'border-white/10 shadow-elevated hover:bg-white/[0.07] hover:-translate-y-1'
               }`}
             >
               {plan.popular && (
@@ -89,19 +89,19 @@ export function PricingSection() {
               )}
 
               <div className="mb-6">
-                <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
-                <p className="text-sm text-gray-500 mt-1">{plan.desc}</p>
+                <h3 className="text-lg font-bold text-white">{plan.name}</h3>
+                <p className="text-sm text-slate-400 mt-1">{plan.desc}</p>
               </div>
 
               <div className="mb-6">
-                <div className="text-2xl font-bold text-gray-900">{plan.price}</div>
-                <div className="text-xs text-gray-400 mt-1">{plan.period}</div>
+                <div className="text-2xl font-bold text-white">{plan.price}</div>
+                <div className="text-xs text-slate-500 mt-1">{plan.period}</div>
               </div>
 
               <ul className="space-y-3 mb-8 flex-1">
                 {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-gray-600">
-                    <CheckCircle2 className="w-4 h-4 text-[#0d9488] mt-0.5 shrink-0" />
+                  <li key={f} className="flex items-start gap-2.5 text-sm text-slate-300">
+                    <CheckCircle2 className="w-4 h-4 text-teal-300 mt-0.5 shrink-0" />
                     {f}
                   </li>
                 ))}
@@ -109,10 +109,10 @@ export function PricingSection() {
 
               <Link
                 href={plan.href}
-                className={`block text-center py-3 px-6 rounded-xl text-sm font-semibold transition-all ${
+                className={`font-pretendard block text-center py-3 px-6 rounded-xl text-sm transition-all ${
                   plan.popular
                     ? 'bg-gradient-to-r from-[#14b8a6] to-[#0d9488] text-white hover:from-[#0d9488] hover:to-[#0f766e] shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40'
-                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
+                    : 'bg-white/[0.04] text-slate-200 hover:bg-white/[0.08] border border-white/15'
                 }`}
               >
                 {plan.cta}

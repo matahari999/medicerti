@@ -11,7 +11,7 @@ export function CTASection() {
       <div className="absolute -bottom-24 -right-24 w-[400px] h-[400px] bg-navy-500/25 rounded-full blur-3xl" />
 
       <Reveal className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight text-balance tracking-tight">
+        <h2 className="font-jalnan text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight text-balance tracking-tight">
           지금 바로
           <br />
           인증 준비를 시작하세요
@@ -24,13 +24,13 @@ export function CTASection() {
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/register"
-            className="inline-flex items-center justify-center px-8 py-4 text-base font-bold text-white bg-gradient-to-r from-[#14b8a6] to-[#0d9488] rounded-xl hover:from-[#0d9488] hover:to-[#0f766e] transition-all shadow-lg shadow-teal-500/30 hover:shadow-teal-500/50 hover:-translate-y-0.5"
+            className="font-pretendard inline-flex items-center justify-center px-8 py-4 text-base text-white bg-gradient-to-r from-[#14b8a6] to-[#0d9488] rounded-xl hover:from-[#0d9488] hover:to-[#0f766e] transition-all shadow-lg shadow-teal-500/30 hover:shadow-teal-500/50 hover:-translate-y-0.5"
           >
             무료로 시작하기
           </Link>
           <Link
             href="/login"
-            className="inline-flex items-center justify-center px-8 py-4 text-base font-medium text-slate-200 bg-white/[0.04] border border-white/15 rounded-xl hover:bg-white/[0.08] hover:border-white/25 hover:text-white transition-all backdrop-blur-sm"
+            className="font-pretendard inline-flex items-center justify-center px-8 py-4 text-base text-slate-200 bg-white/[0.04] border border-white/15 rounded-xl hover:bg-white/[0.08] hover:border-white/25 hover:text-white transition-all backdrop-blur-sm"
           >
             로그인
           </Link>

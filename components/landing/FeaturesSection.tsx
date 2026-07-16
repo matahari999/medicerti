@@ -164,15 +164,15 @@ const features = [
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-24 lg:py-32 bg-gray-50/50">
+    <section id="features" className="py-24 lg:py-32 bg-[#081226]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Reveal className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-gray-900">
+          <h2 className="font-jalnan text-3xl sm:text-4xl font-bold text-white">
             하나의 플랫폼에서
             <br />
-            <span className="text-[#0d9488]">인증 준비 전 과정</span>을
+            <span className="text-teal-300">인증 준비 전 과정</span>을
           </h2>
-          <p className="mt-4 text-lg text-gray-500">
+          <p className="mt-4 text-lg text-slate-400">
             기준 분석부터 갭 평가, 문서 생성, 직원 증빙까지 — 엑셀과 이메일을 벗어나세요
           </p>
         </Reveal>
@@ -190,8 +190,8 @@ export function FeaturesSection() {
                   <span className="w-px h-3 bg-white/30" />
                   <span>Feature</span>
                 </div>
-                <h3 className="font-serif text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">{f.title}</h3>
-                <p className="text-base text-gray-500 leading-relaxed">{f.desc}</p>
+                <h3 className="font-jalnan text-2xl sm:text-3xl font-bold text-white tracking-tight">{f.title}</h3>
+                <p className="text-base text-slate-400 leading-relaxed">{f.desc}</p>
               </div>
 
               {/* Mockup */}

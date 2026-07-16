@@ -26,15 +26,16 @@ const problems = [
 
 export function ProblemSection() {
   return (
-    <section className="py-24 lg:py-32 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="relative py-24 lg:py-32 bg-[#0a1830] overflow-hidden">
+      <div className="absolute inset-0 bg-grid opacity-30 pointer-events-none" />
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Reveal className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-gray-900">
+          <h2 className="font-jalnan text-3xl sm:text-4xl font-bold text-white">
             왜 요양병원 인증 준비가
             <br />
-            <span className="text-[#0d9488]">어려운가요?</span>
+            <span className="text-teal-300">어려운가요?</span>
           </h2>
-          <p className="mt-4 text-lg text-gray-500">
+          <p className="mt-4 text-lg text-slate-400">
             매 달 반복되는 서류 작업과 누락된 증빙이 인증 준비를 더 힘들게 만듭니다
           </p>
         </Reveal>
@@ -42,12 +43,12 @@ export function ProblemSection() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {problems.map((p, i) => (
             <Reveal key={p.title} delay={i * 90}>
-              <div className="group relative h-full bg-white border border-gray-200/70 rounded-2xl p-6 shadow-card hover:shadow-elevated hover:border-[#99f6e4] hover:-translate-y-1 transition-all duration-300">
-                <div className="w-11 h-11 bg-gradient-to-br from-[#f0fdfa] to-[#ccfbf1] rounded-xl flex items-center justify-center mb-4 ring-1 ring-[#99f6e4]/40 group-hover:from-[#14b8a6] group-hover:to-[#0d9488] group-hover:ring-0 group-hover:shadow-lg group-hover:shadow-teal-500/30 transition-all duration-300">
-                  <p.icon className="w-5 h-5 text-[#0d9488] group-hover:text-white transition-colors duration-300" />
+              <div className="group relative h-full bg-white/[0.05] backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-elevated hover:bg-white/[0.07] hover:border-teal-400/30 hover:-translate-y-1 transition-all duration-300">
+                <div className="w-11 h-11 bg-white/[0.06] rounded-xl flex items-center justify-center mb-4 ring-1 ring-teal-400/20 group-hover:from-[#14b8a6] group-hover:to-[#0d9488] group-hover:bg-gradient-to-br group-hover:ring-0 group-hover:shadow-lg group-hover:shadow-teal-500/30 transition-all duration-300">
+                  <p.icon className="w-5 h-5 text-teal-300 group-hover:text-white transition-colors duration-300" />
                 </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">{p.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{p.desc}</p>
+                <h3 className="text-base font-semibold text-white mb-2">{p.title}</h3>
+                <p className="text-sm text-slate-400 leading-relaxed">{p.desc}</p>
               </div>
             </Reveal>
           ))}

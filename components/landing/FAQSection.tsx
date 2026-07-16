@@ -35,10 +35,10 @@ export function FAQSection() {
   const [openId, setOpenId] = useState<number | null>(0)
 
   return (
-    <section className="py-24 lg:py-32 bg-white">
+    <section className="py-24 lg:py-32 bg-[#0a1830]">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <Reveal className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-gray-900">
+          <h2 className="font-jalnan text-3xl sm:text-4xl font-bold text-white">
             자주 묻는 질문
           </h2>
         </Reveal>
@@ -49,16 +49,16 @@ export function FAQSection() {
               key={i}
               delay={i * 60}
               className={`border rounded-xl overflow-hidden transition-all duration-200 ${
-                openId === i ? 'border-[#99f6e4] shadow-card bg-[#f0fdfa]/30' : 'border-gray-200/70 hover:border-gray-300'
+                openId === i ? 'border-teal-400/40 shadow-elevated bg-white/[0.04]' : 'border-white/10 hover:border-white/20'
               }`}
             >
               <button
                 onClick={() => setOpenId(openId === i ? null : i)}
-                className="w-full flex items-center justify-between px-5 py-4 text-left text-sm font-medium text-gray-900 hover:bg-gray-50/50 transition-colors"
+                className="w-full flex items-center justify-between px-5 py-4 text-left text-sm font-medium text-white hover:bg-white/[0.03] transition-colors"
               >
                 {faq.q}
                 <ChevronDown
-                  className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                  className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${
                     openId === i ? 'rotate-180' : ''
                   }`}
                 />
@@ -68,7 +68,7 @@ export function FAQSection() {
                   openId === i ? 'max-h-96' : 'max-h-0'
                 }`}
               >
-                <div className="px-5 pb-4 text-sm text-gray-500 leading-relaxed">
+                <div className="px-5 pb-4 text-sm text-slate-400 leading-relaxed">
                   {faq.a}
                 </div>
               </div>

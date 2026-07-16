@@ -38,7 +38,7 @@ export function Hero() {
               의료기관인증 갭 분석 플랫폼
             </div>
 
-            <h1 className="font-serif text-4xl sm:text-5xl lg:text-[3.75rem] font-bold text-white leading-[1.15] text-balance tracking-tight">
+            <h1 className="font-jalnan text-4xl sm:text-5xl lg:text-[3.75rem] font-bold text-white leading-[1.15] text-balance tracking-tight">
               인증 기준,
               <br />
               <span className="bg-gradient-to-r from-teal-300 via-teal-400 to-emerald-400 bg-clip-text text-transparent">서류 더미</span>에서
@@ -54,13 +54,13 @@ export function Hero() {
             <div className="flex flex-col sm:flex-row gap-3">
               <Link
                 href="/register"
-                className="inline-flex items-center justify-center px-7 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-[#14b8a6] to-[#0d9488] rounded-xl hover:from-[#0d9488] hover:to-[#0f766e] transition-all shadow-lg shadow-teal-500/30 hover:shadow-teal-500/50 hover:-translate-y-0.5"
+                className="font-pretendard inline-flex items-center justify-center px-7 py-3.5 text-base text-white bg-gradient-to-r from-[#14b8a6] to-[#0d9488] rounded-xl hover:from-[#0d9488] hover:to-[#0f766e] transition-all shadow-lg shadow-teal-500/30 hover:shadow-teal-500/50 hover:-translate-y-0.5"
               >
                 무료로 시작하기
               </Link>
               <a
                 href="#features"
-                className="inline-flex items-center justify-center px-7 py-3.5 text-base font-medium text-slate-200 bg-white/[0.04] border border-white/15 rounded-xl hover:bg-white/[0.08] hover:border-white/25 hover:text-white transition-all backdrop-blur-sm"
+                className="font-pretendard inline-flex items-center justify-center px-7 py-3.5 text-base text-slate-200 bg-white/[0.04] border border-white/15 rounded-xl hover:bg-white/[0.08] hover:border-white/25 hover:text-white transition-all backdrop-blur-sm"
               >
                 기능 살펴보기
                 <ChevronDown className="w-4 h-4 ml-2" />
@@ -188,8 +188,8 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Bottom fade to light sections */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-white/95 pointer-events-none" />
+      {/* Bottom fade into next dark section */}
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-[#0a1830] pointer-events-none" />
     </section>
   )
 }
