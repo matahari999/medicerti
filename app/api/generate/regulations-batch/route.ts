@@ -3,12 +3,18 @@ import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { generateFullRegulationsFromCatalog } from '@/lib/gemini/regulation-writer'
 import { STANDARD_CATALOG } from '@/lib/standardCatalog'
+import { isPlatformAdmin } from '@/lib/services/admin.service'
 import type { HospitalTypeKey } from '@/lib/types'
 
 export async function POST(req: Request) {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // 인증 기준 카탈로그만으로 생성되는 미검증 AI 초안이라 플랫폼 관리자만 사용 가능
+  if (!(await isPlatformAdmin())) {
+    return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
+  }
 
   const { hospitalId, catalogType } = await req.json() as {
     hospitalId?: string

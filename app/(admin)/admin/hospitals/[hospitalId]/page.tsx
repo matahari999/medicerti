@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { getHospitalWithMembers, setHospitalStatus } from '@/lib/services/admin.service'
 import { getRegulationTemplatesWithStatus } from '@/lib/services/managed-doc.service'
 import { RegulationTemplateBoard } from '@/components/managed-doc/RegulationTemplateBoard'
+import { RegulationBatchGenerator } from '@/components/regulations/RegulationBatchGenerator'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Building2, Users, FileText, BarChart3 } from 'lucide-react'
@@ -88,6 +89,11 @@ export default async function AdminHospitalDetailPage({
         items={templateItems}
         canWrite
       />
+
+      {/* AI 규정집 상세 자동 생성 (인증기준 카탈로그 기반, 미검증 AI 초안 — 관리자 전용) */}
+      <div className="bg-white rounded-xl border p-6 space-y-3">
+        <RegulationBatchGenerator hospitalId={hospitalId} hospitalName={hospital.name} />
+      </div>
 
       {/* 멤버 목록 */}
       <div className="bg-white rounded-xl border p-6">
