@@ -6,8 +6,8 @@ const plans = [
   {
     name: '스타터',
     desc: '소규모 요양병원 / 개인',
-    price: '[가격 미정 — 추후 입력]',
-    period: '/월',
+    price: '가격 문의',
+    period: '도입 상담 후 안내',
     features: [
       '병원 1개 등록',
       '인증 기준 구조화',
@@ -21,8 +21,8 @@ const plans = [
   {
     name: '프로',
     desc: '중규모 병원 / 인증 전담팀',
-    price: '[가격 미정 — 추후 입력]',
-    period: '/월',
+    price: '가격 문의',
+    period: '도입 상담 후 안내',
     features: [
       '병원 최대 3개',
       '모든 기능 무제한',
@@ -39,8 +39,8 @@ const plans = [
   {
     name: '엔터프라이즈',
     desc: '병원그룹 / 컨설팅 기관',
-    price: '[가격 미정 — 추후 입력]',
-    period: '/월',
+    price: '가격 문의',
+    period: '도입 상담 후 안내',
     features: [
       '병원 무제한',
       '모든 프로 기능 포함',
@@ -94,8 +94,8 @@ export function PricingSection() {
               </div>
 
               <div className="mb-6">
-                <div className="text-sm text-gray-400">{plan.price}</div>
-                <div className="text-xs text-gray-400 mt-0.5">{plan.period}</div>
+                <div className="text-2xl font-bold text-gray-900">{plan.price}</div>
+                <div className="text-xs text-gray-400 mt-1">{plan.period}</div>
               </div>
 
               <ul className="space-y-3 mb-8 flex-1">

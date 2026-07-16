@@ -78,8 +78,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['var(--font-noto-sans-kr)', 'var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        serif: ['var(--font-noto-serif-kr)', 'ui-serif', 'Georgia', 'serif'],
+        sans: ['Pretendard', 'var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['Pretendard', 'ui-serif', 'Georgia', 'serif'],
       },
       borderRadius: {
         lg: 'var(--radius)',
