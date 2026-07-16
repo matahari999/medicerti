@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { hospitalSchema } from '@/lib/validators/hospital'
+import { STAFF_ROLES, OPERATING_HOUR_SLOTS } from '@/lib/constants'
 import {
   createHospital,
   updateHospital,
@@ -62,6 +63,18 @@ export async function updateHospitalAction(
 ): Promise<HospitalState> {
   await requireHospitalMember(hospitalId, 'manager')
 
+  const staffComposition: Record<string, number> = {}
+  for (const { key } of STAFF_ROLES) {
+    const value = formData.get(`staff_${key}`)
+    if (value) staffComposition[key] = Number(value)
+  }
+
+  const operatingHours: Record<string, string> = {}
+  for (const { key } of OPERATING_HOUR_SLOTS) {
+    const value = formData.get(`hours_${key}`)
+    if (value) operatingHours[key] = String(value)
+  }
+
   const raw = {
     name:                 formData.get('name'),
     license_number:       formData.get('license_number') || null,
@@ -73,6 +86,10 @@ export async function updateHospitalAction(
     accreditation_cycle:  formData.get('accreditation_cycle') || 1,
     accreditation_start:  formData.get('accreditation_start') || null,
     accreditation_target: formData.get('accreditation_target') || null,
+    departments:          formData.getAll('departments'),
+    special_units:        formData.getAll('special_units'),
+    staff_composition:    staffComposition,
+    operating_hours:      operatingHours,
   }
 
   const parsed = hospitalSchema.safeParse(raw)

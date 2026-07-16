@@ -2,8 +2,14 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { FileText } from 'lucide-react'
 import { requireHospitalMember } from '@/lib/auth'
-import { getManagedDocuments, getManagedDocStats } from '@/lib/services/managed-doc.service'
+import { getHospital } from '@/lib/services/hospital.service'
+import {
+  getManagedDocuments,
+  getManagedDocStats,
+  getRegulationTemplatesWithStatus,
+} from '@/lib/services/managed-doc.service'
 import { ManagedDocList } from '@/components/managed-doc/ManagedDocList'
+import { RegulationTemplateBoard } from '@/components/managed-doc/RegulationTemplateBoard'
 import { MANAGED_DOC_STATUS_LABELS } from '@/lib/constants'
 
 export const metadata: Metadata = { title: '관리 문서' }
@@ -21,9 +27,13 @@ export default async function ManagedDocsPage({ params }: Props) {
     notFound()
   }
 
-  const [docs, stats] = await Promise.all([
+  const hospital = await getHospital(hospitalId)
+  if (!hospital) notFound()
+
+  const [docs, stats, templateItems] = await Promise.all([
     getManagedDocuments(hospitalId),
     getManagedDocStats(hospitalId),
+    getRegulationTemplatesWithStatus(hospitalId, hospital.type),
   ])
 
   return (
@@ -45,6 +55,12 @@ export default async function ManagedDocsPage({ params }: Props) {
           <p className="text-xs text-muted-foreground">전체 문서</p>
         </div>
       </div>
+
+      <RegulationTemplateBoard
+        hospitalId={hospitalId}
+        items={templateItems}
+        canWrite={['admin', 'manager'].includes(role)}
+      />
 
       <ManagedDocList
         hospitalId={hospitalId}

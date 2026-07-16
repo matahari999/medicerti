@@ -47,6 +47,10 @@ export interface Hospital {
   accreditation_cycle: number
   accreditation_start: string | null
   accreditation_target: string | null
+  departments: string[]
+  staff_composition: Record<string, number>
+  operating_hours: Record<string, string>
+  special_units: string[]
   status: 'active' | 'suspended' | 'archived'
   logo_url: string | null
   created_by: string
@@ -194,6 +198,8 @@ export interface ManagedDocument {
   criterion_id: string | null
   analysis_run_id: string | null
   policy_draft_id: string | null
+  template_id: string | null
+  video_url: string | null
   approved_by: string | null
   approved_at: string | null
   archived_at: string | null
@@ -201,6 +207,18 @@ export interface ManagedDocument {
   updated_by: string | null
   created_at: string
   updated_at: string
+}
+
+export interface RegulationTemplate {
+  id: string
+  template_code: string
+  hospital_type: string
+  title: string
+  entry_code: string | null
+  template_content: string
+  variable_schema: Record<string, { label: string; source: string; required: boolean }>
+  sort_order: number
+  created_at: string
 }
 
 export interface ManagedDocumentVersion {

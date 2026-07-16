@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { MANAGED_DOC_STATUS_TRANSITIONS } from '@/lib/constants'
+import { MANAGED_DOC_STATUS_TRANSITIONS, NEEDS_REVIEW_MARKER } from '@/lib/constants'
 import type { ManagedDocStatus } from '@/types/database.types'
 
 type Params = { params: Promise<{ docId: string }> }
@@ -15,8 +15,7 @@ export async function GET(_req: Request, { params }: Params) {
     .from('managed_documents')
     .select(`
       *,
-      accreditation_criteria(code, title, domain),
-      creator_profile:profiles!managed_documents_created_by_fkey(full_name)
+      accreditation_criteria(code, title, domain)
     `)
     .eq('id', docId)
     .maybeSingle()
@@ -54,6 +53,7 @@ export async function PATCH(request: Request, { params }: Params) {
     title?:         string
     content?:       string
     status?:        ManagedDocStatus
+    video_url?:     string | null
     change_summary?: string
   }
 
@@ -87,14 +87,24 @@ export async function PATCH(request: Request, { params }: Params) {
         { status: 422 }
       )
     }
+    if (body.status === 'approved') {
+      const finalContent = body.content ?? existing.content
+      if (finalContent.includes(NEEDS_REVIEW_MARKER)) {
+        return NextResponse.json(
+          { error: '담당자 확인이 필요한 항목이 남아 있어 승인할 수 없습니다' },
+          { status: 422 }
+        )
+      }
+    }
   }
 
   const isContentChange = body.title !== undefined || body.content !== undefined
   const newVersion = isContentChange ? existing.version_number + 1 : existing.version_number
 
   const updatePayload: Record<string, unknown> = { updated_by: user.id }
-  if (body.title   !== undefined) updatePayload.title   = body.title
-  if (body.content !== undefined) updatePayload.content = body.content
+  if (body.title     !== undefined) updatePayload.title     = body.title
+  if (body.content   !== undefined) updatePayload.content   = body.content
+  if (body.video_url !== undefined) updatePayload.video_url = body.video_url
   if (body.status  !== undefined) {
     updatePayload.status = body.status
     if (body.status === 'approved') {

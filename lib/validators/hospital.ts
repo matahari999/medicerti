@@ -11,6 +11,10 @@ export const hospitalSchema = z.object({
   accreditation_cycle:  z.coerce.number().int().positive().default(1),
   accreditation_start:  z.string().optional().nullable(),
   accreditation_target: z.string().optional().nullable(),
+  departments:          z.array(z.string()).default([]),
+  special_units:        z.array(z.string()).default([]),
+  staff_composition:    z.record(z.string(), z.coerce.number().int().nonnegative()).default({}),
+  operating_hours:      z.record(z.string(), z.string()).default({}),
 })
 
 export const inviteMemberSchema = z.object({

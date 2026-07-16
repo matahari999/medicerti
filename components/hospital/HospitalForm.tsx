@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { REGIONS } from '@/lib/validators/hospital'
+import { DEPARTMENTS, SPECIAL_UNITS, STAFF_ROLES, OPERATING_HOUR_SLOTS } from '@/lib/constants'
 import type { Hospital } from '@/types/database.types'
 import type { HospitalState } from '@/app/actions/hospital'
 import { HospitalSearchBox } from './HospitalSearchBox'
@@ -211,6 +212,88 @@ export function HospitalForm({
               type="date"
               defaultValue={defaultValues?.accreditation_target ?? ''}
             />
+          </div>
+        </div>
+      </section>
+
+      {/* 병원 프로필 (규정집 커스터마이징용) */}
+      <section className="space-y-4">
+        <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">
+          병원 프로필
+          <span className="ml-2 text-[10px] font-normal text-muted-foreground bg-gray-100 px-1.5 py-0.5 rounded align-middle">
+            규정집 자동 커스터마이징에 사용됩니다
+          </span>
+        </h3>
+
+        <div className="space-y-1.5">
+          <Label>진료과</Label>
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {DEPARTMENTS.map((dept) => (
+              <label key={dept} className="flex items-center gap-1.5 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  name="departments"
+                  value={dept}
+                  defaultChecked={defaultValues?.departments?.includes(dept)}
+                  className="rounded border-gray-300"
+                />
+                {dept}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>특수부서</Label>
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {SPECIAL_UNITS.map((unit) => (
+              <label key={unit} className="flex items-center gap-1.5 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  name="special_units"
+                  value={unit}
+                  defaultChecked={defaultValues?.special_units?.includes(unit)}
+                  className="rounded border-gray-300"
+                />
+                {unit}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>인력구성</Label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {STAFF_ROLES.map(({ key, label }) => (
+              <div key={key} className="space-y-1">
+                <Label htmlFor={`staff_${key}`} className="text-xs text-muted-foreground">{label}</Label>
+                <Input
+                  id={`staff_${key}`}
+                  name={`staff_${key}`}
+                  type="number"
+                  min={0}
+                  placeholder="0"
+                  defaultValue={defaultValues?.staff_composition?.[key] ?? ''}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>운영시간</Label>
+          <div className="grid grid-cols-2 gap-4">
+            {OPERATING_HOUR_SLOTS.map(({ key, label }) => (
+              <div key={key} className="space-y-1">
+                <Label htmlFor={`hours_${key}`} className="text-xs text-muted-foreground">{label}</Label>
+                <Input
+                  id={`hours_${key}`}
+                  name={`hours_${key}`}
+                  placeholder="09:00~18:00"
+                  defaultValue={defaultValues?.operating_hours?.[key] ?? ''}
+                />
+              </div>
+            ))}
           </div>
         </div>
       </section>

@@ -138,3 +138,30 @@ export const MANAGED_DOC_STATUS_TRANSITIONS: Record<string, string[]> = {
   approved:     ['archived'],
   archived:     [],
 } as const
+
+// ============================
+// 병원 프로필 — 규정집 커스터마이징 입력값
+// ============================
+export const DEPARTMENTS = [
+  '내과', '외과', '신경과', '정신건강의학과', '재활의학과',
+  '가정의학과', '영상의학과', '진단검사의학과', '치과',
+] as const
+
+export const SPECIAL_UNITS = [
+  '응급실', '중환자실', '수술실', '분만실', '격리병동', '보호병동',
+] as const
+
+export const STAFF_ROLES = [
+  { key: 'doctor',       label: '의사' },
+  { key: 'nurse',        label: '간호사' },
+  { key: 'nurse_aide',   label: '간호조무사' },
+  { key: 'other',        label: '기타 인력' },
+] as const
+
+export const OPERATING_HOUR_SLOTS = [
+  { key: 'weekday', label: '평일' },
+  { key: 'weekend', label: '주말/공휴일' },
+] as const
+
+// 규정집 초안 텍스트에서 담당자 확인이 필요한 항목을 표시하는 마커
+export const NEEDS_REVIEW_MARKER = '[담당자 확인 필요'

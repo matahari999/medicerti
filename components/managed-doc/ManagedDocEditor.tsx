@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, Loader2, ChevronDown, ChevronUp, History } from 'lucide-react'
+import { Save, Loader2, ChevronDown, ChevronUp, History, AlertTriangle, Eye, EyeOff, Video } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,6 +12,7 @@ import {
   MANAGED_DOC_TYPE_LABELS,
   MANAGED_DOC_STATUS_LABELS,
   MANAGED_DOC_STATUS_TRANSITIONS,
+  NEEDS_REVIEW_MARKER,
 } from '@/lib/constants'
 import type { ManagedDocStatus, ManagedDocType } from '@/types/database.types'
 
@@ -34,32 +35,51 @@ interface ManagedDocEditorProps {
     status:         ManagedDocStatus
     version_number: number
     approved_at:    string | null
+    video_url:      string | null
     accreditation_criteria: { code: string; title: string; domain: string } | null
   }
   versions:     Version[]
   userRole:     string
 }
 
+function getYoutubeEmbedUrl(url: string): string | null {
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/)
+  return m ? `https://www.youtube.com/embed/${m[1]}` : null
+}
+
 export function ManagedDocEditor({ hospitalId, doc, versions, userRole }: ManagedDocEditorProps) {
   const router               = useRouter()
   const [title,   setTitle]  = useState(doc.title)
   const [content, setContent]= useState(doc.content)
+  const [videoUrl, setVideoUrl] = useState(doc.video_url ?? '')
   const [saving,  setSaving] = useState(false)
   const [error,   setError]  = useState<string | null>(null)
   const [showHistory, setShowHistory] = useState(false)
   const [currentStatus, setCurrentStatus] = useState<ManagedDocStatus>(doc.status)
   const [currentVersion, setCurrentVersion] = useState(doc.version_number)
+  const [showPreview, setShowPreview] = useState(false)
 
   const canWrite = ['admin', 'manager'].includes(userRole)
-  const isDirty  = title !== doc.title || content !== doc.content
-  const nextStatuses = MANAGED_DOC_STATUS_TRANSITIONS[currentStatus] ?? []
+  const isDirty  = title !== doc.title || content !== doc.content || videoUrl !== (doc.video_url ?? '')
+
+  const needsReviewCount = useMemo(
+    () => content.split(NEEDS_REVIEW_MARKER).length - 1,
+    [content]
+  )
+
+  const nextStatuses = (MANAGED_DOC_STATUS_TRANSITIONS[currentStatus] ?? [])
+    .filter((s) => s !== 'approved' || needsReviewCount === 0)
 
   const save = useCallback(async (overrides: Record<string, unknown> = {}) => {
     setSaving(true)
     setError(null)
     try {
       const payload: Record<string, unknown> = {}
-      if (isDirty) { payload.title = title; payload.content = content }
+      if (isDirty) {
+        payload.title     = title
+        payload.content   = content
+        payload.video_url = videoUrl.trim() || null
+      }
       Object.assign(payload, overrides)
 
       const res  = await fetch(`/api/managed-docs/${doc.id}`, {
@@ -80,7 +100,7 @@ export function ManagedDocEditor({ hospitalId, doc, versions, userRole }: Manage
     } finally {
       setSaving(false)
     }
-  }, [doc.id, title, content, isDirty, router])
+  }, [doc.id, title, content, videoUrl, isDirty, router])
 
   const handleStatusChange = (nextStatus: ManagedDocStatus) => {
     save({ status: nextStatus })
@@ -148,6 +168,13 @@ export function ManagedDocEditor({ hospitalId, doc, versions, userRole }: Manage
         </div>
       )}
 
+      {needsReviewCount > 0 && (
+        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          담당자 확인이 필요한 항목이 {needsReviewCount}건 남아 있습니다. 모두 해소해야 승인할 수 있습니다.
+        </div>
+      )}
+
       {/* 승인 안내 */}
       {currentStatus === 'approved' && doc.approved_at && (
         <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-800">
@@ -170,17 +197,82 @@ export function ManagedDocEditor({ hospitalId, doc, versions, userRole }: Manage
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="doc-content">내용</Label>
-            <textarea
-              id="doc-content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              disabled={!canWrite || currentStatus === 'archived'}
-              rows={24}
-              placeholder="문서 내용을 입력하세요. Markdown을 지원합니다."
-              className="w-full border rounded-xl px-4 py-3 text-sm leading-relaxed resize-y focus:outline-none focus:ring-2 focus:ring-brand-400 disabled:bg-gray-50 disabled:text-gray-500 font-mono"
-            />
+            <div className="flex items-center justify-between">
+              <Label htmlFor="doc-content">내용</Label>
+              {needsReviewCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowPreview((v) => !v)}
+                  className="inline-flex items-center gap-1 text-xs text-brand-700 hover:text-brand-800"
+                >
+                  {showPreview ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  {showPreview ? '편집으로 돌아가기' : '확인 필요 항목 미리보기'}
+                </button>
+              )}
+            </div>
+
+            {showPreview ? (
+              <div className="w-full border rounded-xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-gray-50 max-h-[600px] overflow-y-auto">
+                {content.split(NEEDS_REVIEW_MARKER).map((chunk, i) => (
+                  <Fragment key={i}>
+                    {i > 0 && (
+                      <mark className="bg-yellow-200 text-yellow-900 rounded px-0.5">
+                        {NEEDS_REVIEW_MARKER}{chunk.slice(0, chunk.indexOf(']') + 1)}
+                      </mark>
+                    )}
+                    {i > 0 ? chunk.slice(chunk.indexOf(']') + 1) : chunk}
+                  </Fragment>
+                ))}
+              </div>
+            ) : (
+              <textarea
+                id="doc-content"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                disabled={!canWrite || currentStatus === 'archived'}
+                rows={24}
+                placeholder="문서 내용을 입력하세요. Markdown을 지원합니다."
+                className="w-full border rounded-xl px-4 py-3 text-sm leading-relaxed resize-y focus:outline-none focus:ring-2 focus:ring-brand-400 disabled:bg-gray-50 disabled:text-gray-500 font-mono"
+              />
+            )}
           </div>
+
+          {doc.doc_type === 'education_record' && (
+            <div className="space-y-1.5">
+              <Label htmlFor="doc-video-url" className="flex items-center gap-1.5">
+                <Video className="w-3.5 h-3.5" />
+                교육 동영상 링크 (YouTube 등, 선택)
+              </Label>
+              <Input
+                id="doc-video-url"
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                disabled={!canWrite || currentStatus === 'archived'}
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+              {videoUrl.trim() && (
+                getYoutubeEmbedUrl(videoUrl.trim()) ? (
+                  <div className="aspect-video rounded-xl overflow-hidden border">
+                    <iframe
+                      src={getYoutubeEmbedUrl(videoUrl.trim())!}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                ) : (
+                  <a
+                    href={videoUrl.trim()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-brand-700 hover:underline break-all"
+                  >
+                    {videoUrl.trim()}
+                  </a>
+                )
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

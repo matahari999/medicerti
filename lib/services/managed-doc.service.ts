@@ -1,14 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
-import type { ManagedDocument, ManagedDocumentVersion, ManagedDocType, ManagedDocStatus } from '@/types/database.types'
+import type { ManagedDocument, ManagedDocumentVersion, ManagedDocType, ManagedDocStatus, RegulationTemplate } from '@/types/database.types'
 
 export interface ManagedDocWithCriterion extends ManagedDocument {
   accreditation_criteria: {
     code: string
     title: string
     domain: string
-  } | null
-  creator_profile: {
-    full_name: string | null
   } | null
 }
 
@@ -24,8 +21,7 @@ export async function getManagedDocuments(
     .from('managed_documents')
     .select(`
       *,
-      accreditation_criteria(code, title, domain),
-      creator_profile:profiles!managed_documents_created_by_fkey(full_name)
+      accreditation_criteria(code, title, domain)
     `)
     .eq('hospital_id', hospitalId)
     .order('updated_at', { ascending: false })
@@ -47,8 +43,7 @@ export async function getManagedDocument(
     .from('managed_documents')
     .select(`
       *,
-      accreditation_criteria(code, title, domain),
-      creator_profile:profiles!managed_documents_created_by_fkey(full_name)
+      accreditation_criteria(code, title, domain)
     `)
     .eq('id', documentId)
     .eq('hospital_id', hospitalId)
@@ -70,6 +65,54 @@ export async function getManagedDocVersions(
 
   if (error) { console.error('[ManagedDoc] versions error', error); return [] }
   return (data ?? []) as ManagedDocumentVersion[]
+}
+
+export interface RegulationTemplateStatus {
+  template:      RegulationTemplate
+  documentId:    string | null
+  status:        ManagedDocStatus | 'not_generated'
+  versionNumber: number | null
+}
+
+export async function getRegulationTemplatesWithStatus(
+  hospitalId: string,
+  hospitalType: string
+): Promise<RegulationTemplateStatus[]> {
+  const supabase = await createClient()
+
+  const [{ data: templates, error: templatesErr }, { data: docs, error: docsErr }] = await Promise.all([
+    supabase
+      .from('regulation_templates')
+      .select('*')
+      .eq('hospital_type', hospitalType)
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('managed_documents')
+      .select('id, template_id, status, version_number')
+      .eq('hospital_id', hospitalId)
+      .not('template_id', 'is', null),
+  ])
+
+  if (templatesErr || !templates) {
+    console.error('[ManagedDoc] regulation templates error', templatesErr)
+    return []
+  }
+  if (docsErr) console.error('[ManagedDoc] regulation docs error', docsErr)
+
+  const docsByTemplate = new Map(
+    ((docs ?? []) as unknown as Array<{ id: string; template_id: string; status: ManagedDocStatus; version_number: number }>)
+      .map((d) => [d.template_id, d])
+  )
+
+  return (templates as unknown as RegulationTemplate[]).map((template) => {
+    const doc = docsByTemplate.get(template.id)
+    return {
+      template,
+      documentId:    doc?.id ?? null,
+      status:        doc?.status ?? 'not_generated',
+      versionNumber: doc?.version_number ?? null,
+    }
+  })
 }
 
 export async function getManagedDocStats(hospitalId: string) {
