@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Gowun_Dodum, Gowun_Batang } from 'next/font/google'
+import { Inter, Gowun_Dodum, Gowun_Batang, Nanum_Gothic } from 'next/font/google'
 import localFont from 'next/font/local'
 import './globals.css'
 
@@ -20,6 +20,13 @@ const gowunBatang = Gowun_Batang({
   subsets: ['latin'],
   weight: ['400', '700'],
   variable: '--font-gowun-batang',
+  display: 'swap',
+})
+
+const nanumGothic = Nanum_Gothic({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-nanum-gothic',
   display: 'swap',
 })
 
@@ -55,7 +62,7 @@ export default function RootLayout({
       <head>
         <meta name="color-scheme" content="light dark" />
       </head>
-      <body className={`${inter.variable} ${gowunDodum.variable} ${gowunBatang.variable} ${jalnanGothic.variable} ${pretendardSemiBold.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${gowunDodum.variable} ${gowunBatang.variable} ${nanumGothic.variable} ${jalnanGothic.variable} ${pretendardSemiBold.variable} font-sans antialiased`}>
         {children}
       </body>
     </html>

@@ -58,7 +58,7 @@ const plans = [
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="font-gulim py-24 lg:py-32 bg-[#081226]">
+    <section id="pricing" className="font-nanum py-24 lg:py-32 bg-[#081226]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Reveal className="text-center max-w-2xl mx-auto mb-16">
           <h2 className="font-jalnan text-2xl sm:text-3xl font-bold text-white">

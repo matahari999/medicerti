@@ -3,7 +3,7 @@ import { Reveal } from './Reveal'
 
 export function CTASection() {
   return (
-    <section className="font-gulim py-24 lg:py-32 relative overflow-hidden">
+    <section className="font-nanum py-24 lg:py-32 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-sidebar" />
       <div className="absolute inset-0 bg-grid opacity-40 pointer-events-none" />

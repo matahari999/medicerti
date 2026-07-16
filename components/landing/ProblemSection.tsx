@@ -26,7 +26,7 @@ const problems = [
 
 export function ProblemSection() {
   return (
-    <section className="font-gulim relative py-24 lg:py-32 bg-[#0a1830] overflow-hidden">
+    <section className="font-nanum relative py-24 lg:py-32 bg-[#0a1830] overflow-hidden">
       <div className="absolute inset-0 bg-grid opacity-30 pointer-events-none" />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Reveal className="text-center max-w-2xl mx-auto mb-16">

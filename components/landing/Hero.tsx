@@ -17,7 +17,7 @@ const statusMock = [
 
 export function Hero() {
   return (
-    <section className="font-gulim relative min-h-screen flex items-center overflow-hidden bg-sidebar pt-20">
+    <section className="font-nanum relative min-h-screen flex items-center overflow-hidden bg-sidebar pt-20">
       {/* Grid bg */}
       <div className="absolute inset-0 bg-grid opacity-50 pointer-events-none" />
 

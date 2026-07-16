@@ -27,7 +27,7 @@ const footerLinks = {
 
 export function Footer() {
   return (
-    <footer className="font-gulim bg-[#081226] text-slate-400 border-t border-white/[0.06]">
+    <footer className="font-nanum bg-[#081226] text-slate-400 border-t border-white/[0.06]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand */}
