@@ -29,18 +29,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'hospitalId, templateId required' }, { status: 400 })
   }
 
-  const { data: member } = await supabase
-    .from('hospital_members')
-    .select('role')
-    .eq('hospital_id', hospitalId)
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .maybeSingle()
-
-  if (!member || !['admin', 'manager'].includes(member.role)) {
-    return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
-  }
-
   const { data: hospital, error: hospitalErr } = await supabase
     .from('hospitals')
     .select('id, name, type, bed_count, departments, staff_composition, special_units, operating_hours')

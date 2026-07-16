@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getHospitalWithMembers, setHospitalStatus } from '@/lib/services/admin.service'
+import { getRegulationTemplatesWithStatus } from '@/lib/services/managed-doc.service'
+import { RegulationTemplateBoard } from '@/components/managed-doc/RegulationTemplateBoard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Building2, Users, FileText, BarChart3 } from 'lucide-react'
@@ -17,6 +19,8 @@ export default async function AdminHospitalDetailPage({
   const { hospitalId } = await params
   const { hospital, members, analysisRuns, documents } = await getHospitalWithMembers(hospitalId)
   if (!hospital) notFound()
+
+  const templateItems = await getRegulationTemplatesWithStatus(hospitalId, hospital.type)
 
   const statusColor: Record<string, string> = {
     active:    'bg-green-100 text-green-800',
@@ -77,6 +81,13 @@ export default async function AdminHospitalDetailPage({
           <AdminHospitalActions hospitalId={hospital.id} currentStatus={hospital.status as 'active' | 'suspended' | 'archived'} />
         </div>
       </div>
+
+      {/* 병원 맞춤 규정집 자동 커스터마이징 (파일럿, 플랫폼 관리자 전용 업데이트 창) */}
+      <RegulationTemplateBoard
+        hospitalId={hospitalId}
+        items={templateItems}
+        canWrite
+      />
 
       {/* 멤버 목록 */}
       <div className="bg-white rounded-xl border p-6">

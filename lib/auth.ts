@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { isPlatformAdmin } from '@/lib/services/admin.service'
 import type { HospitalRole } from '@/types/database.types'
 
 const ROLE_HIERARCHY: Record<HospitalRole, number> = {
@@ -24,6 +25,13 @@ export async function requireHospitalMember(
   minRole: HospitalRole = 'viewer'
 ) {
   const user = await requireAuth()
+
+  // 플랫폼 관리자는 소속 여부와 무관하게 모든 병원에 admin 권한으로 접근한다
+  // (DB의 is_platform_admin() OR is_hospital_member(...) RLS 규칙과 동일한 원칙)
+  if (await isPlatformAdmin()) {
+    return { user, role: 'admin' as HospitalRole }
+  }
+
   const supabase = await createClient()
 
   const { data, error } = await supabase
