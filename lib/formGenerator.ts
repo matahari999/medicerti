@@ -96,11 +96,46 @@ table.data tr.data-r td{height:22px;}
 table.data tr.tall td{height:40px;}
 .check-o{font-size:12pt;}
 
+/* ── 화면 입력용 스타일 (인쇄 시에는 무효화됨) ── */
+[contenteditable="true"]{outline:none;background:#fffef0;cursor:text;min-height:1.2em;}
+[contenteditable="true"]:hover{background:#fff9d6;}
+[contenteditable="true"]:focus{background:#fff3b0;box-shadow:inset 0 0 0 1px #d4a600;}
+[contenteditable="true"]:empty::before{content:'클릭하여 입력';color:#bbb;font-size:7.5pt;font-style:italic;}
+.sign-box[contenteditable="true"]{display:flex;align-items:center;justify-content:center;font-size:9pt;font-weight:600;}
+
 /* ── 푸터 ── */
 .form-footer{margin-top:8px;border-top:1px solid #888;padding-top:5px;font-size:7pt;color:#666;display:flex;justify-content:space-between;}
 
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+@media print{
+  body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  [contenteditable="true"]{background:none !important;box-shadow:none !important;}
+  [contenteditable="true"]:empty::before{content:none !important;}
+}
 </style>`;
+
+// 빈 데이터 셀(작성자가 채워야 할 칸)을 화면에서 바로 입력 가능하게 만드는 스크립트.
+// 각 makeXxxTemp() 함수를 개별로 손댈 필요 없이, 렌더링된 최종 DOM에서 "라벨이 없는
+// 빈 칸"만 자동으로 찾아 contenteditable로 전환한다 — 인쇄 시에는 CSS로 입력 스타일만 제거되고
+// 타이핑된 내용은 그대로 인쇄된다.
+const FILLABLE_SCRIPT = `
+  document.querySelectorAll('table.data td').forEach(function(td){
+    if (td.children.length === 0 && td.textContent.trim() === '' && !td.classList.contains('hd')) {
+      td.contentEditable = 'true';
+    }
+  });
+  document.querySelectorAll('.sign-box').forEach(function(box){
+    box.contentEditable = 'true';
+  });
+  document.querySelectorAll('.info-box').forEach(function(box){
+    if (box.textContent.trim() === '') box.contentEditable = 'true';
+  });
+  const hint = document.createElement('div');
+  hint.textContent = '💡 노란 빈 칸을 클릭하면 화면에서 바로 입력할 수 있습니다';
+  hint.style.cssText = 'position:fixed;top:10px;left:10px;padding:6px 12px;background:#fff3b0;color:#5c4a00;border:1px solid #d4a600;border-radius:6px;font-size:12px;z-index:9999;';
+  document.body.appendChild(hint);
+  window.addEventListener('beforeprint', () => hint.style.display = 'none');
+  window.addEventListener('afterprint', () => hint.style.display = '');
+`;
 
 // ── 서식 생성 함수들 ────────────────────────────────────────────────────
 
@@ -966,6 +1001,7 @@ ${header({
 ${opts.bodyHtml}
 ${footer(`${opts.hospitalName} (지능형 초안 — 실무 검토 후 사용)`)}
 <script>
+  ${FILLABLE_SCRIPT}
   const btn = document.createElement('button');
   btn.textContent = '🖨 인쇄 / PDF 저장';
   btn.style.cssText = 'position:fixed;top:10px;right:10px;padding:8px 16px;background:#1f3864;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;z-index:9999;';
@@ -1005,6 +1041,7 @@ ${header({
 ${getBody(item)}
 ${footer(item.source)}
 <script>
+  ${FILLABLE_SCRIPT}
   // 인쇄 버튼 (브라우저에서 열었을 때)
   const btn = document.createElement('button');
   btn.textContent = '🖨 인쇄 / PDF 저장';
