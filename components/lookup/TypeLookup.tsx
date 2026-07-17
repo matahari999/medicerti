@@ -25,6 +25,7 @@ const typeLabels: Record<string, string> = {
   industrial: '산재병원 정보',
   benefit: '요양급여 적용기준',
   'health-stats': '보건의료 통계',
+  'drug-safety': '의약품 안전 정보',
 };
 
 const typeDescriptions: Record<string, string> = {
@@ -35,6 +36,7 @@ const typeDescriptions: Record<string, string> = {
   industrial: '근로복지공단으로부터 산재보상보험법에 의해 산재 환자에 대해 원활한 요양과 장해 치료를 약속받은 지정 의료원입니다.',
   benefit: '심평원의 급여기준 심사 지침서에 의거한 요양기관 급여 적용 기준 및 억제대/치료재료 본인부담 산정률입니다.',
   'health-stats': '보건복지부 국가통계포털에 수록된 요양병원 입원 환자 평균 재원일수, 노인성 질환자 진료 건수 등의 거시 지표입니다.',
+  'drug-safety': '식품의약품안전처가 공개하는 의약품 회수·판매중지 처분 현황입니다. 안전성 문제, 품질 부적합, 행정처분 등으로 유통이 차단된 의약품을 확인할 수 있습니다.',
 };
 
 interface TypeLookupProps {
@@ -401,6 +403,42 @@ export default function TypeLookup({ basePath, type }: TypeLookupProps) {
                         <td className="text-right font-black text-blue-600 text-xs">{item.value}</td>
                         <td className="text-xs text-slate-600 font-semibold">{item.source}</td>
                         <td className="text-xs text-slate-500">{item.desc}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr><td colSpan={5} className="text-center py-8 text-slate-400">데이터가 존재하지 않습니다.</td></tr>
+                  )}
+                </tbody>
+              </>
+            )}
+
+            {/* 8. 의약품 안전 정보 (drug-safety) */}
+            {type === 'drug-safety' && (
+              <>
+                <thead>
+                  <tr>
+                    <th className="min-w-[220px]">품목명</th>
+                    <th className="w-[150px]">업체명</th>
+                    <th className="w-[90px] text-center">강제 회수</th>
+                    <th className="w-[110px]">회수명령일</th>
+                    <th className="min-w-[260px]">회수 사유</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan={5} className="text-center py-8 text-slate-400">데이터 로딩 중...</td></tr>
+                  ) : data.length > 0 ? (
+                    data.map((item) => (
+                      <tr key={item.code}>
+                        <td className="font-bold text-slate-800 text-sm">{item.product}</td>
+                        <td className="text-xs text-slate-600">{item.company}</td>
+                        <td className="text-center">
+                          <span className={cn('text-[11px] font-bold px-2 py-0.5 rounded border', item.forced ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-100 text-slate-600 border-slate-200')}>
+                            {item.forced ? '강제' : '자율'}
+                          </span>
+                        </td>
+                        <td className="text-xs text-slate-500">{item.recallDate || '-'}</td>
+                        <td className="text-xs text-slate-500">{item.reason}</td>
                       </tr>
                     ))
                   ) : (

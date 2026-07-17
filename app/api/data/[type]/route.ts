@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { parseXmlItems } from '@/lib/publicData/xml';
 
 // 타입별 템플릿 Mock 데이터 셋
 const mockDataMap: Record<string, any[]> = {
@@ -64,6 +65,11 @@ const mockDataMap: Record<string, any[]> = {
     { code: 'S01', indicator: '노인성 질환 연간 외래 방문 건수', period: '2025년 기준', value: '45,210천 건', source: '국민건강보험공단', desc: '치매, 파킨슨, 뇌혈관 질환 환자 통계' },
     { code: 'S02', indicator: '요양병원 입원 환자 평균 재원일수', period: '2025년 기준', value: '145.2일', source: '건강보험심사평가원', desc: '장기요양 수급 환자 위주 구성' },
     { code: 'S03', indicator: '욕창 발생률 전국 요양병원 평균', period: '2025년 기준', value: '3.4%', source: '보건복지부', desc: '적정성 평가 6차 분석 통계' },
+  ],
+  'drug-safety': [
+    { code: 'M01', product: '00진통소염제정', company: '00제약', forced: true, recallDate: '2026-04-10', reason: '용출시험 부적합' },
+    { code: 'M02', product: '00항생제캡슐', company: '00바이오', forced: false, recallDate: '2026-03-22', reason: '표시기재사항 위반' },
+    { code: 'M03', product: '00소화제정', company: '00제약', forced: true, recallDate: '2026-02-14', reason: '이물혼입' },
   ]
 };
 
@@ -108,6 +114,55 @@ export async function GET(
       return JSON.stringify(item).toLowerCase().includes(searchWord.toLowerCase());
     });
     return NextResponse.json({ data: filtered, isMock: true, referenceDate: '2026-06-01' });
+  }
+
+  // 'drug-safety'는 식약처 의약품 회수·판매중지 정보서비스로 실제 연동 (XML 응답)
+  if (type === 'drug-safety') {
+    try {
+      const drugEndpoint = 'https://apis.data.go.kr/1471000/MdcinRtrvlSleStpgeInfoService04/getMdcinRtrvlSleStpgelList03';
+      const queryParams = `serviceKey=${encodeURIComponent(apiKey)}&pageNo=1&numOfRows=100`;
+      const response = await fetch(`${drugEndpoint}?${queryParams}`, { next: { revalidate: 300 } });
+
+      if (!response.ok) {
+        throw new Error(`OpenAPI 응답 오류: ${response.status}`);
+      }
+
+      const xmlText = await response.text();
+      const items = parseXmlItems(xmlText);
+
+      const formattedData = items.map((item, idx) => {
+        const raw = item.RTRVL_CMMND_DT || item.RECALL_COMMAND_DATE || '';
+        const recallDate = raw.length >= 8 ? `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}` : raw;
+        return {
+          code: item.ITEM_SEQ || `M${idx}`,
+          product: item.PRDUCT || '품목명 정보 없음',
+          company: item.ENTRPS || '',
+          forced: item.ENFRC_YN === 'Y',
+          recallDate,
+          reason: item.RTRVL_RESN || '',
+        };
+      });
+
+      const filtered = formattedData.filter((item) => {
+        if (!searchWord) return true;
+        const q = searchWord.toLowerCase();
+        return item.product.toLowerCase().includes(q) || item.company.toLowerCase().includes(q);
+      });
+
+      return NextResponse.json({
+        data: filtered,
+        isMock: false,
+        referenceDate: new Date().toISOString().split('T')[0],
+      });
+    } catch (error: any) {
+      console.error('api/data/drug-safety 호출 실패, Mock 모드 대체:', error.message);
+      return NextResponse.json({
+        data: mockList,
+        isMock: true,
+        fallbackError: error.message,
+        referenceDate: '2026-06-01',
+      });
+    }
   }
 
   // 2. 그 외 타입(details 등)은 심평원 병원정보서비스로 실제 연동
