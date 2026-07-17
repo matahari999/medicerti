@@ -22,6 +22,7 @@ interface HospitalCodeItem {
   tel: string;
   estbDd: string;
   doctors: number | null;
+  beds: number | null;
 }
 
 const SOURCE_META = {
@@ -214,6 +215,7 @@ export default function CodesLookup({ basePath }: { basePath: string }) {
                   <th>기관명</th>
                   <th>종별</th>
                   <th>전화번호</th>
+                  <th>병상수</th>
                   <th>의사 수</th>
                   <th>개설일</th>
                   <th>소재지</th>
@@ -227,6 +229,7 @@ export default function CodesLookup({ basePath }: { basePath: string }) {
                       <span className="badge badge-info text-xs">{h.type}</span>
                     </td>
                     <td className="text-slate-600 text-sm">{h.tel || '-'}</td>
+                    <td className="text-slate-700 text-sm">{h.beds != null ? `${h.beds}개` : '-'}</td>
                     <td className="text-slate-700 text-sm">{h.doctors != null ? `${h.doctors}명` : '-'}</td>
                     <td className="text-slate-600 text-sm">{h.estbDd || '-'}</td>
                     <td className="text-slate-600 text-sm">{h.address}</td>
