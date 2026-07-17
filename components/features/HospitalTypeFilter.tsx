@@ -2,7 +2,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { HOSPITAL_TYPE_LABELS } from '@/types';
 
-const TYPES = ['nursing', 'psychiatric', 'rehabilitation', 'general', 'tertiary'] as const;
+const TYPES = ['nursing', 'psychiatric', 'rehabilitation', 'acute', 'general', 'tertiary', 'hospital', 'dental', 'korean'] as const;
 
 export function HospitalTypeFilter({ initialType }: { initialType?: string }) {
   const router = useRouter();
