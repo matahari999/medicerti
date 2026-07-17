@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { HospitalCard } from '@/components/hospital/HospitalCard'
 import { EmptyState } from '@/components/ui/empty-state'
 import { getUserHospitals } from '@/lib/services/hospital.service'
+import LookupHub from '@/components/lookup/LookupHub'
 
 export const metadata: Metadata = { title: '병원 관리' }
 
@@ -53,6 +54,14 @@ export default async function HospitalsPage() {
           ))}
         </div>
       )}
+
+      <div className="border-t pt-6">
+        <LookupHub
+          basePath="/hospitals/lookup"
+          title="병원 조회"
+          description="병원명을 입력하면 코드·상세정보·인증현황·개폐업·적정성평가·산재지정 6개 카테고리를 한번에 조회합니다."
+        />
+      </div>
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { LayoutDashboard, Building2, Settings, Shield, Sparkles, BookOpen, GraduationCap, MessageCircle, BarChart3, FileText, Bell, CalendarDays, Search, FolderOpen } from 'lucide-react'
+import { LayoutDashboard, Building2, Settings, Shield, Sparkles, BookOpen, GraduationCap, MessageCircle, BarChart3, FileText, Bell, CalendarDays, FolderOpen } from 'lucide-react'
 import MediLogo from '@/components/MediLogo'
 import { NavItem } from './NavItem'
 import { UserMenu } from './UserMenu'
@@ -10,7 +10,6 @@ const navGroups = [
     items: [
       { href: '/dashboard', label: '대시보드',   icon: <LayoutDashboard className="w-4 h-4 shrink-0" /> },
       { href: '/hospitals', label: '병원 관리',   icon: <Building2 className="w-4 h-4 shrink-0" /> },
-      { href: '/lookup',    label: '병원 조회',   icon: <Search className="w-4 h-4 shrink-0" /> },
       { href: '/compare',   label: '병원간 비교', icon: <BarChart3 className="w-4 h-4 shrink-0" /> },
     ],
   },

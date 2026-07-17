@@ -6,5 +6,5 @@ export default async function TypeLookupPage({
   params: Promise<{ type: string }>
 }) {
   const { type } = await params
-  return <TypeLookup basePath="/lookup" type={type} />
+  return <TypeLookup basePath="/hospitals/lookup" type={type} />
 }
