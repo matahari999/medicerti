@@ -7,7 +7,7 @@ export default function AdminDataPortalPage() {
     <LookupHub
       basePath="/admin/data"
       title="공공데이터 포털"
-      description="병원명을 입력하면 코드·상세정보·인증현황·개폐업·적정성평가·산재지정 6개 카테고리를 한번에 조회합니다."
+      description="병원명을 입력하면 코드·상세정보·인증현황·개폐업·적정성평가 5개 카테고리를 한번에 조회합니다."
       showApiKeyNotice
     />
   )

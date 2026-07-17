@@ -37,35 +37,9 @@ const mockDataMap: Record<string, any[]> = {
     { code: 'C07', name: '의정부카네이션요양병원', status: '인증 완료', certNo: 'CERT-2024-301', certPeriod: '2024-12-01 ~ 2028-11-30', org: '의료기관평가인증원' },
     { code: 'C08', name: '효사랑가족요양병원', status: '인증 완료', certNo: 'CERT-2026-050', certPeriod: '2026-05-20 ~ 2030-05-19', org: '의료기관평가인증원' },
   ],
-  drg: [
-    { code: 'D01', name: '안과 백내장 수술 포괄수가', type: '질병군(안과)', codeName: 'O1234', price: '약 1,200,000원', desc: '수정체 백내장 적출술 및 인공수정체 삽입술 일체 포함' },
-    { code: 'D02', name: '이비인후과 편도 절제 포괄수가', type: '질병군(이비인후과)', codeName: 'E5678', price: '약 980,000원', desc: '편도선 및 아데노이드 절제술 입원 및 처치 일체 포함' },
-    { code: 'D03', name: '외과 충수절제(맹장염) 포괄수가', type: '질병군(일반외과)', codeName: 'G3210', price: '약 2,100,000원', desc: '충수절제술 및 마취, 입원료 일체 포함' },
-    { code: 'D04', name: '외과 서타서혜 탈장 포괄수가', type: '질병군(일반외과)', codeName: 'G4500', price: '약 1,500,000원', desc: '탈장 근본수술 및 메쉬 삽입 일체 포함' },
-  ],
-  'medical-resource': [
-    { code: 'R01', region: '서울특별시', docRatio: '3.1명', nurseRatio: '5.8명', bedRatio: '8.5개', desc: '인구 1,000명당 보건의료 자원 분배 기준' },
-    { code: 'R02', region: '경기도', docRatio: '2.0명', nurseRatio: '4.2명', bedRatio: '6.2개', desc: '인구 1,000명당 보건의료 자원 분배 기준' },
-    { code: 'R03', region: '부산광역시', docRatio: '2.5명', nurseRatio: '4.8명', bedRatio: '12.4개', desc: '인구 1,000명당 보건의료 자원 분배 기준' },
-    { code: 'R04', region: '인천광역시', docRatio: '1.9명', nurseRatio: '3.9명', bedRatio: '7.8개', desc: '인구 1,000명당 보건의료 자원 분배 기준' },
-  ],
-  industrial: [
-    { code: 'I01', name: '미소들실버케어요양병원', class: '산재지정요양원', tel: '02-2613-0007', limit: '재활치료, 물리치료 가능', address: '서울시 구로구 개봉로15길 41' },
-    { code: 'I02', name: '보바스기념병원', class: '산재지정병원', tel: '031-786-3000', limit: '전과목 산재 요양 가능', address: '경기도 성남시 분당구 대왕판교로 155-7' },
-    { code: 'I03', name: '인창요양병원', class: '산재지정요양원', tel: '051-464-5000', limit: '부산권역 산재 요양 지정', address: '부산시 동구 중앙대로 365' },
-    { code: 'I04', name: '희연요양병원', class: '산재지정요양원', tel: '055-270-2500', limit: '노인성 뇌질환 재활 특화', address: '경남 창원시 성산구 원이대로 848' },
-    { code: 'I05', name: '효사랑가족요양병원', class: '산재지정병원', tel: '063-220-0114', limit: '산재 입원 장기 요양 가능', address: '전북 전주시 완산구 용머리로 12' },
-  ],
-  benefit: [
-    { code: 'B01', name: '요양병원 일당정액수가 기준', category: '입원료', codeName: '정액-01', limit: '환자군(의료최고도~신체기능저하군) 분류에 따른 정액 금액 산정', desc: '2026년 복지부 고시 적용' },
-    { code: 'B02', name: '욕창 예방 매트리스 수가 적용 기준', category: '치료재료', codeName: '재료-44', limit: 'Braden Scale 12점 이하 고위험 환자 처방 시 급여 인정', desc: '환자당 연간 1회 한도 제한' },
-    { code: 'B03', name: '신체억제대 사용 가이드라인 본인부담', category: '급여조건', codeName: '조건-88', limit: '의사 처방 및 보호자 동의서 구비 시 급여 적용', desc: '미구비 시 전액 비급여 환수' },
-  ],
-  'health-stats': [
-    { code: 'S01', indicator: '노인성 질환 연간 외래 방문 건수', period: '2025년 기준', value: '45,210천 건', source: '국민건강보험공단', desc: '치매, 파킨슨, 뇌혈관 질환 환자 통계' },
-    { code: 'S02', indicator: '요양병원 입원 환자 평균 재원일수', period: '2025년 기준', value: '145.2일', source: '건강보험심사평가원', desc: '장기요양 수급 환자 위주 구성' },
-    { code: 'S03', indicator: '욕창 발생률 전국 요양병원 평균', period: '2025년 기준', value: '3.4%', source: '보건복지부', desc: '적정성 평가 6차 분석 통계' },
-  ],
+  // drg·medical-resource·industrial·benefit·health-stats는 실제 연동 가능한
+  // 공공 API가 없어(가상 수치를 정부기관 출처처럼 보여주던 문제) 조회 목록에서
+  // 제거됨. 관련 Mock 데이터도 제거한다 — 직접 URL로 와도 가짜 데이터를 주지 않는다.
   'drug-safety': [
     { code: 'M01', product: '00진통소염제정', company: '00제약', forced: true, recallDate: '2026-04-10', reason: '용출시험 부적합' },
     { code: 'M02', product: '00항생제캡슐', company: '00바이오', forced: false, recallDate: '2026-03-22', reason: '표시기재사항 위반' },
@@ -105,15 +79,11 @@ export async function GET(
 
   // 'codes'·'cert-status'는 각각 app/api/data/codes, app/api/data/cert-status의
   // 정적 라우트가 우선 처리하므로 이 동적 [type] 핸들러까지 오지 않는다.
-  // 'drg'는 승인된 실제 서비스가 62만 건짜리 수가코드표일 뿐 병원 목록이 아니고,
-  // 'industrial'(근로복지공단 API는 현재 502로 응답 없음)·'medical-resource'·
-  // 'benefit'·'health-stats'는 애초에 매칭되는 승인 서비스가 없다 — 항상 Mock으로 표시한다.
+  // 'drg'·'industrial'·'medical-resource'·'benefit'·'health-stats'는 실연동
+  // 가능한 공공 API가 없어 조회 목록에서 제거됨 — 요청이 와도 빈 결과를 준다
+  // (가상 수치를 정부기관 데이터처럼 반환하지 않는다).
   if (['drg', 'industrial', 'medical-resource', 'benefit', 'health-stats'].includes(type)) {
-    const filtered = mockList.filter((item) => {
-      if (!searchWord) return true;
-      return JSON.stringify(item).toLowerCase().includes(searchWord.toLowerCase());
-    });
-    return NextResponse.json({ data: filtered, isMock: true, referenceDate: '2026-06-01' });
+    return NextResponse.json({ data: [], isMock: false, retired: true });
   }
 
   // 'drug-safety'는 식약처 의약품 회수·판매중지 정보서비스로 실제 연동 (XML 응답)

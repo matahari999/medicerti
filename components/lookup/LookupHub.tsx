@@ -1,5 +1,5 @@
 // 기관 조회 허브 — 관리자(공공데이터 포털)와 일반 화면(병원 조회)이 공유
-// 병원별 조회(코드/상세/인증/개폐업/적정성/산재)는 통합 검색으로, 기준·통계 자료는 카테고리 브라우징으로 분리
+// 병원별 조회(코드/상세/인증/개폐업/적정성)는 통합 검색으로, 기준·통계 자료는 카테고리 브라우징으로 분리
 
 'use client';
 
@@ -28,21 +28,19 @@ interface CategoryResult {
   isMock: boolean;
 }
 
+// 실제 공공 API로 검증된 카테고리만 노출한다. 실연동 소스가 없어 가상(Mock)
+// 수치를 정부기관 출처처럼 보여주던 산재지정/DRG/의료자원/요양급여/보건통계
+// 5종은 조회 목록에서 제거함(실제 자료/API 확보 시 재추가).
 const HOSPITAL_TYPES = [
   { type: 'codes',       label: '의료기관 코드',    path: '/codes',       apiPath: '/api/data/codes' },
   { type: 'details',     label: '상세 정보',        path: '/details',     apiPath: '/api/data/details' },
   { type: 'cert-status', label: '인증 현황 (급성기)', path: '/cert-status', apiPath: '/api/data/cert-status' },
   { type: 'status',      label: '개업·폐업·휴업',   path: '/status',      apiPath: '/api/data/status' },
   { type: 'evaluation',  label: '적정성 평가',      path: '/evaluation',  apiPath: '/api/data/evaluation' },
-  { type: 'industrial',  label: '산재지정 정보',    path: '/industrial',  apiPath: '/api/data/industrial' },
 ] as const;
 
 const REFERENCE_TYPES = [
-  { type: 'drg',              label: '포괄수가(DRG)',     path: '/drg',              desc: '질병군(DRG)별 포괄수가 적용 항목' },
-  { type: 'medical-resource', label: '의료자원 통계',     path: '/medical-resource', desc: '지역별 의사·간호사·병상 통계' },
-  { type: 'benefit',          label: '요양급여 기준',     path: '/benefit',          desc: '요양급여 적용기준 및 심사지침' },
-  { type: 'health-stats',     label: '보건의료 통계',     path: '/health-stats',     desc: '보건의료 이용 및 자원 통계' },
-  { type: 'drug-safety',      label: '의약품 안전 정보',  path: '/drug-safety',      desc: '의약품 이상사례 및 안전성 정보' },
+  { type: 'drug-safety',      label: '의약품 안전 정보',  path: '/drug-safety',      desc: '식약처 의약품 회수·판매중지 처분 현황' },
 ] as const;
 
 interface LookupHubProps {
@@ -120,7 +118,7 @@ export default function LookupHub({ basePath, title, description, showApiKeyNoti
 
         {searched && !loading && (
           <p className="text-xs text-slate-500 mt-2">
-            총 <strong>{totalMatches}</strong>건 검색됨 (6개 카테고리 통합)
+            총 <strong>{totalMatches}</strong>건 검색됨 ({HOSPITAL_TYPES.length}개 카테고리 통합)
           </p>
         )}
 
