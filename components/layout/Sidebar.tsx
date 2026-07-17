@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { LayoutDashboard, Building2, Settings, Shield, Sparkles, BookOpen, GraduationCap, MessageCircle, BarChart3, FileText, Bell, CalendarDays, Database } from 'lucide-react'
+import { LayoutDashboard, Building2, Settings, Shield, Sparkles, BookOpen, GraduationCap, MessageCircle, BarChart3, FileText, Bell, CalendarDays, Search, FolderOpen } from 'lucide-react'
 import MediLogo from '@/components/MediLogo'
 import { NavItem } from './NavItem'
 import { UserMenu } from './UserMenu'
@@ -10,6 +10,7 @@ const navGroups = [
     items: [
       { href: '/dashboard', label: '대시보드',   icon: <LayoutDashboard className="w-4 h-4 shrink-0" /> },
       { href: '/hospitals', label: '병원 관리',   icon: <Building2 className="w-4 h-4 shrink-0" /> },
+      { href: '/lookup',    label: '병원 조회',   icon: <Search className="w-4 h-4 shrink-0" /> },
       { href: '/compare',   label: '병원간 비교', icon: <BarChart3 className="w-4 h-4 shrink-0" /> },
     ],
   },
@@ -18,6 +19,7 @@ const navGroups = [
     items: [
       { href: '/generate',   label: '문서 생성',  icon: <Sparkles className="w-4 h-4 shrink-0" /> },
       { href: '/standards',  label: '인증기준집', icon: <BookOpen className="w-4 h-4 shrink-0" /> },
+      { href: '/resources',  label: '인증 자료실', icon: <FolderOpen className="w-4 h-4 shrink-0" /> },
       { href: '/education',  label: '교육 관리',  icon: <GraduationCap className="w-4 h-4 shrink-0" /> },
       { href: '/consulting', label: '컨설팅',     icon: <MessageCircle className="w-4 h-4 shrink-0" /> },
     ],
@@ -26,7 +28,6 @@ const navGroups = [
     label: '인사이트',
     items: [
       { href: '/reports',  label: '보고서',      icon: <BarChart3 className="w-4 h-4 shrink-0" /> },
-      { href: '/data',     label: '공공데이터',   icon: <Database className="w-4 h-4 shrink-0" /> },
       { href: '/schedule', label: '일정 캘린더', icon: <CalendarDays className="w-4 h-4 shrink-0" /> },
     ],
   },

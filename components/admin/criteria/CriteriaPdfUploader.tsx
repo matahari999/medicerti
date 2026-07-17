@@ -1,13 +1,17 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { Upload, File, Loader2, CheckCircle, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 export function CriteriaPdfUploader() {
+  const router = useRouter()
   const [dragOver, setDragOver] = useState(false)
   const [file, setFile] = useState<File | null>(null)
+  const [title, setTitle] = useState('')
+  const [category, setCategory] = useState<'standard' | 'etc'>('etc')
   const [uploading, setUploading] = useState(false)
   const [result, setResult] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -19,6 +23,7 @@ export function CriteriaPdfUploader() {
       return
     }
     setFile(f)
+    setTitle(f.name.replace(/\.pdf$/i, ''))
     setResult(null)
     setError(null)
   }
@@ -31,10 +36,14 @@ export function CriteriaPdfUploader() {
     try {
       const form = new FormData()
       form.append('file', file)
+      form.append('title', title)
+      form.append('category', category)
       const res = await fetch('/api/admin/criteria/pdf', { method: 'POST', body: form })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
-      setResult(data.path ?? '업로드 완료')
+      setResult(`"${data.title}" 업로드 완료`)
+      setFile(null)
+      router.refresh()
     } catch (e: any) {
       setError(e.message ?? '업로드 실패')
     } finally {
@@ -60,11 +69,29 @@ export function CriteriaPdfUploader() {
         <p className="text-xs text-muted-foreground mt-1">참고용 PDF 파일 (최대 50MB)</p>
       </div>
 
-      {file && !uploading && !result && (
-        <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <File className="w-4 h-4 text-blue-600 shrink-0" />
-          <span className="text-sm text-blue-800 truncate flex-1">{file.name}</span>
-          <Button size="sm" onClick={upload}>업로드</Button>
+      {file && !uploading && (
+        <div className="space-y-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center gap-2 text-sm text-blue-800">
+            <File className="w-4 h-4 text-blue-600 shrink-0" />
+            <span className="truncate">{file.name}</span>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="자료 제목"
+              className="flex-1 text-sm px-3 py-2 border border-blue-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+            />
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value as 'standard' | 'etc')}
+              className="text-sm px-3 py-2 border border-blue-200 rounded-lg bg-white focus:outline-none"
+            >
+              <option value="etc">기타 항목</option>
+              <option value="standard">인증기준집</option>
+            </select>
+            <Button size="sm" onClick={upload} disabled={!title.trim()}>업로드</Button>
+          </div>
         </div>
       )}
 

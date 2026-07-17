@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { isPlatformAdmin } from '@/lib/services/admin.service'
+import { upsertCriteriaDoc, deleteCriteriaDoc, type CriteriaDocCategory } from '@/lib/services/criteriaDocs.service'
 
 export async function POST(req: Request) {
   const isAdmin = await isPlatformAdmin()
@@ -23,6 +24,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'File exceeds 50MB limit' }, { status: 413 })
   }
 
+  const title = (form.get('title') as string | null)?.trim() || file.name.replace(/\.pdf$/i, '')
+  const category = ((form.get('category') as string | null) === 'standard' ? 'standard' : 'etc') as CriteriaDocCategory
+
   const path = `criteria/${crypto.randomUUID()}.pdf`
   const { error: uploadError } = await supabase.storage
     .from('documents')
@@ -30,10 +34,52 @@ export async function POST(req: Request) {
 
   if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 })
 
-  // signed URL (10년)
-  const { data: signed } = await supabase.storage
-    .from('documents')
-    .createSignedUrl(path, 365 * 24 * 3600 * 10)
+  await upsertCriteriaDoc({
+    path,
+    title,
+    category,
+    originalFilename: file.name,
+    uploadedAt: new Date().toISOString(),
+  })
 
-  return NextResponse.json({ path, url: signed?.signedUrl ?? null })
+  return NextResponse.json({ path, title })
+}
+
+// 제목/카테고리 수정
+export async function PATCH(req: Request) {
+  const isAdmin = await isPlatformAdmin()
+  if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+
+  const body = await req.json() as { path?: string; title?: string; category?: string }
+  if (!body.path || !body.title?.trim()) {
+    return NextResponse.json({ error: 'path와 title이 필요합니다' }, { status: 400 })
+  }
+
+  try {
+    await upsertCriteriaDoc({
+      path: body.path,
+      title: body.title.trim(),
+      category: (body.category === 'standard' ? 'standard' : 'etc') as CriteriaDocCategory,
+    })
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 })
+  }
+}
+
+// 파일 삭제
+export async function DELETE(req: Request) {
+  const isAdmin = await isPlatformAdmin()
+  if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+
+  const { searchParams } = new URL(req.url)
+  const path = searchParams.get('path')
+  if (!path) return NextResponse.json({ error: 'path가 필요합니다' }, { status: 400 })
+
+  try {
+    await deleteCriteriaDoc(path)
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 })
+  }
 }

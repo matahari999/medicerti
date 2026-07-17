@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
 import {
   Database,
   Search,
@@ -9,8 +8,6 @@ import {
   MapPin,
   Phone,
   Calendar,
-  CheckCircle,
-  HelpCircle,
   AlertCircle,
   Zap,
   Info,
@@ -19,10 +16,10 @@ import {
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
-// 공공데이터 타입 한국어 맵
+// 조회 타입 한국어 맵
 const typeLabels: Record<string, string> = {
   details: '병원 상세정보',
-  'cert-status': '인증현황',
+  'cert-status': '인증현황 (급성기)',
   drg: '포괄수가 DRG',
   'medical-resource': '의료자원 인구기준',
   industrial: '산재병원 정보',
@@ -32,7 +29,7 @@ const typeLabels: Record<string, string> = {
 
 const typeDescriptions: Record<string, string> = {
   details: '건강보험심사평가원(HIRA)의 전국 병원 데이터베이스를 조회하여, 병상 규모, 전화번호, 의료진 인력 등의 상세 정보를 확인합니다.',
-  'cert-status': '의료기관평가인증원의 공인 심사를 거쳐 정식 의료기관 인증을 획득한 전국 요양병원 및 정신병원의 유효 인증서 상태입니다.',
+  'cert-status': '의료기관평가인증원의 공인 심사를 거쳐 정식 의료기관 인증을 획득한 전국 급성기(종합병원급 이상) 의료기관의 유효 인증서 상태입니다. 급성기 인증현황만 제공되어, 요양병원·정신병원 인증현황은 이 화면에서 조회되지 않습니다.',
   drg: '백내장, 편도선, 충수돌기(맹장) 등 보건복지부가 지정한 7대 질병군 포괄수가제(DRG)가 적용되는 의료기관과 수가 정보입니다.',
   'medical-resource': '시/도 지방자치단체별 인구 대비 확보된 의료진 수 및 병상 비율 등의 공공 자원 불균형 지표 통계입니다.',
   industrial: '근로복지공단으로부터 산재보상보험법에 의해 산재 환자에 대해 원활한 요양과 장해 치료를 약속받은 지정 의료원입니다.',
@@ -40,11 +37,12 @@ const typeDescriptions: Record<string, string> = {
   'health-stats': '보건복지부 국가통계포털에 수록된 요양병원 입원 환자 평균 재원일수, 노인성 질환자 진료 건수 등의 거시 지표입니다.',
 };
 
-export default function DynamicDataPage() {
-  const router = useRouter();
-  const params = useParams();
-  const type = (params?.type as string) || '';
+interface TypeLookupProps {
+  basePath: string;
+  type: string;
+}
 
+export default function TypeLookup({ basePath, type }: TypeLookupProps) {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchWord, setSearchWord] = useState('');
@@ -86,15 +84,15 @@ export default function DynamicDataPage() {
     return (
       <div className="card p-8 text-center space-y-4 max-w-md mx-auto mt-12">
         <AlertCircle size={40} className="text-rose-500 mx-auto" />
-        <h2 className="text-lg font-black text-slate-800">잘못된 공공데이터 경로</h2>
+        <h2 className="text-lg font-black text-slate-800">잘못된 조회 경로</h2>
         <p className="text-xs text-slate-500">
-          요청하신 공공데이터 메뉴 `{type}`는 존재하지 않거나 연동되지 않는 정보입니다.
+          요청하신 조회 메뉴 `{type}`는 존재하지 않거나 연동되지 않는 정보입니다.
         </p>
         <Link
-          href="/data"
+          href={basePath}
           className="inline-block text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg"
         >
-          포털 홈으로 이동
+          조회 홈으로 이동
         </Link>
       </div>
     );
@@ -106,11 +104,11 @@ export default function DynamicDataPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="space-y-1">
           <Link
-            href="/data"
+            href={basePath}
             className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-slate-600 transition-colors"
           >
             <ChevronLeft size={12} />
-            공공데이터 포털 홈
+            조회 홈
           </Link>
           <h1 className="section-title flex items-center gap-2 mt-1">
             <Database size={20} className="text-blue-600" />
@@ -119,6 +117,20 @@ export default function DynamicDataPage() {
           <p className="text-sm text-slate-500 max-w-3xl">
             {typeDescriptions[type]}
           </p>
+          {type === 'cert-status' && (
+            <p className="text-xs text-slate-400">
+              요양병원·정신병원 인증현황은{' '}
+              <a
+                href="https://koiha.or.kr/web/kr/assessment/accStatus.do"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-700 underline"
+              >
+                의료기관평가인증원 공식 인증현황 조회 페이지
+              </a>
+              에서 직접 확인하세요.
+            </p>
+          )}
         </div>
 
         {/* API 연동 뱃지 */}
@@ -225,7 +237,7 @@ export default function DynamicDataPage() {
                           </span>
                         </td>
                         <td className="text-xs font-mono text-slate-600 font-semibold">{item.certNo}</td>
-                        <td className="text-xs text-slate-500 font-semibold flex items-center gap-1"><Calendar size={11} className="text-slate-400" />{item.certPeriod}</td>
+                        <td className="text-xs text-slate-500 font-semibold flex items-center gap-1"><Calendar size={11} className="text-slate-400" />{item.certStart} ~ {item.certEnd}</td>
                         <td className="text-xs text-slate-600 font-semibold">{item.org}</td>
                       </tr>
                     ))

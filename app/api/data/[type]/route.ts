@@ -1,7 +1,17 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 
 // 타입별 템플릿 Mock 데이터 셋
 const mockDataMap: Record<string, any[]> = {
+  codes: [
+    { code: 'H01', name: '미소들실버케어요양병원', type: '요양병원', address: '서울시 구로구 개봉로15길 41', beds: 290, status: '운영중' },
+    { code: 'H02', name: '보바스기념병원', type: '요양병원', address: '경기도 성남시 분당구 대왕판교로 155-7', beds: 224, status: '운영중' },
+    { code: 'H03', name: '참예원요양병원', type: '요양병원', address: '서울시 강남구 개포로 419', beds: 160, status: '운영중' },
+    { code: 'H04', name: '인창요양병원', type: '요양병원', address: '부산시 동구 중앙대로 365', beds: 430, status: '운영중' },
+    { code: 'H05', name: '희연요양병원', type: '요양병원', address: '경남 창원시 성산구 원이대로 848', beds: 380, status: '운영중' },
+    { code: 'H09', name: '서울대학교병원', type: '급성기병원', address: '서울시 종로구 대학로 101', beds: 1782, status: '운영중' },
+    { code: 'H10', name: '삼성서울병원', type: '급성기병원', address: '서울시 강남구 일원로 81', beds: 1985, status: '운영중' },
+  ],
   details: [
     { code: 'H01', name: '미소들실버케어요양병원', tel: '02-2613-0007', beds: 290, doctors: 14, nurses: 68, address: '서울시 구로구 개봉로15길 41' },
     { code: 'H02', name: '보바스기념병원', tel: '031-786-3000', beds: 224, doctors: 15, nurses: 82, address: '경기도 성남시 분당구 대왕판교로 155-7' },
@@ -61,6 +71,10 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ type: string }> }
 ) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
+
   const { type } = await params;
   const { searchParams } = new URL(request.url);
   const searchWord = searchParams.get('q') || '';
@@ -83,45 +97,25 @@ export async function GET(
     });
   }
 
-  // 안전하게 API Key 획득 및 인코딩 복원 처리 헬퍼
-  const getDecodedApiKey = (key: string) => {
-    try {
-      let decodedKey = key;
-      while (decodedKey.includes('%')) {
-        const next = decodeURIComponent(decodedKey);
-        if (next === decodedKey) break;
-        decodedKey = next;
-      }
-      return decodedKey;
-    } catch (e) {
-      return key;
-    }
-  };
+  // 'codes'·'cert-status'는 각각 app/api/data/codes, app/api/data/cert-status의
+  // 정적 라우트가 우선 처리하므로 이 동적 [type] 핸들러까지 오지 않는다.
+  // 'drg'는 승인된 실제 서비스가 62만 건짜리 수가코드표일 뿐 병원 목록이 아니고,
+  // 'industrial'(근로복지공단 API는 현재 502로 응답 없음)·'medical-resource'·
+  // 'benefit'·'health-stats'는 애초에 매칭되는 승인 서비스가 없다 — 항상 Mock으로 표시한다.
+  if (['drg', 'industrial', 'medical-resource', 'benefit', 'health-stats'].includes(type)) {
+    const filtered = mockList.filter((item) => {
+      if (!searchWord) return true;
+      return JSON.stringify(item).toLowerCase().includes(searchWord.toLowerCase());
+    });
+    return NextResponse.json({ data: filtered, isMock: true, referenceDate: '2026-06-01' });
+  }
 
-  // 2. 실제 공공데이터 API 연동 분기 처리
+  // 2. 그 외 타입(details 등)은 심평원 병원정보서비스로 실제 연동
   try {
-    let apiEndpoint = '';
+    const apiEndpoint = 'http://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList';
 
-    // 각 Type에 따른 심평원(HIRA)의 실제 세부 오픈API 엔드포인트 연계 매핑
-    switch (type) {
-      case 'details':
-        apiEndpoint = 'http://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList';
-        break;
-      case 'cert-status':
-        apiEndpoint = 'http://apis.data.go.kr/B551182/hospAsmtInfoService/getHospAsmtAreaList';
-        break;
-      case 'drg':
-        apiEndpoint = 'http://apis.data.go.kr/B551182/drgHospInfoService/getDrgHospList';
-        break;
-      default:
-        apiEndpoint = 'http://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList';
-        break;
-    }
-
-    const decodedKey = getDecodedApiKey(apiKey);
-    
     // 쿼리 스트링 수동 구성 (자동 이중인코딩 방지)
-    let queryParams = `serviceKey=${encodeURIComponent(decodedKey)}&pageNo=1&numOfRows=20&_type=json`;
+    let queryParams = `serviceKey=${encodeURIComponent(apiKey)}&pageNo=1&numOfRows=20&_type=json`;
     if (searchWord) {
       queryParams += `&yadmNm=${encodeURIComponent(searchWord)}`;
     }
@@ -159,47 +153,16 @@ export async function GET(
 
     const itemArray = Array.isArray(items) ? items : [items];
 
-    // 스키마 정규화 가공
-    const formattedData = itemArray.map((item: any, idx: number) => {
-      // 공통 필드 매핑 및 가상 데이터 매핑을 통해 안정적인 출력물 생성
-      const name = item.yadmNm || item.asmtAreaNm || '의료기관';
-      const address = item.addr || '주소 정보 없음';
-      
-      if (type === 'details') {
-        return {
-          code: item.ykiho || `H${idx}`,
-          name,
-          tel: item.telno || '02-0000-0000',
-          beds: item.gdrBdsCnt ? parseInt(item.gdrBdsCnt, 10) : 120,
-          doctors: item.drTotCnt ? parseInt(item.drTotCnt, 10) : 8,
-          nurses: item.mfrnBdsCnt ? parseInt(item.mfrnBdsCnt, 10) : 30, // 가상 비례
-          address,
-        };
-      }
-      if (type === 'cert-status') {
-        return {
-          code: item.ykiho || `C${idx}`,
-          name,
-          status: '인증 완료',
-          certNo: `CERT-2026-${idx + 100}`,
-          certPeriod: '2026-03-01 ~ 2030-02-28',
-          org: '의료기관평가인증원',
-        };
-      }
-      if (type === 'drg') {
-        return {
-          code: item.ykiho || `D${idx}`,
-          name,
-          type: item.clCdNm || '요양병원',
-          codeName: item.dgCd || 'DRG-O10',
-          price: '보험적용 정액 산정',
-          desc: item.dgNm || '포괄수가 수술 항목 지정 적용 기관',
-        };
-      }
-      
-      // Fallback
-      return mockList[idx] || mockList[0];
-    });
+    // details 스키마 정규화 (이 지점에 도달하는 유일한 type)
+    const formattedData = itemArray.map((item: any, idx: number) => ({
+      code: item.ykiho || `H${idx}`,
+      name: item.yadmNm || '의료기관',
+      tel: item.telno || '02-0000-0000',
+      beds: item.gdrBdsCnt ? parseInt(item.gdrBdsCnt, 10) : 120,
+      doctors: item.drTotCnt ? parseInt(item.drTotCnt, 10) : 8,
+      nurses: item.mfrnBdsCnt ? parseInt(item.mfrnBdsCnt, 10) : 30, // 가상 비례
+      address: item.addr || '주소 정보 없음',
+    }));
 
     return NextResponse.json({
       data: formattedData,

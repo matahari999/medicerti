@@ -56,7 +56,7 @@ export function TrustSection() {
     <section className="font-nanum py-24 lg:py-32 bg-[#0a1830]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Reveal className="text-center max-w-2xl mx-auto mb-14">
-          <h2 className="font-jalnan text-2xl sm:text-3xl font-bold text-white">
+          <h2 className="font-jalnan text-2xl sm:text-3xl font-bold text-white leading-snug">
             설계 철학 —{' '}
             <span className="text-teal-300">왜 이 구조인가</span>
           </h2>

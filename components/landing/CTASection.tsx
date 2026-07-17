@@ -11,7 +11,7 @@ export function CTASection() {
       <div className="absolute -bottom-24 -right-24 w-[400px] h-[400px] bg-navy-500/25 rounded-full blur-3xl" />
 
       <Reveal className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="font-jalnan text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight text-balance">
+        <h2 className="font-jalnan text-xl sm:text-2xl lg:text-3xl font-bold text-white leading-snug text-balance">
           지금 바로
           <br />
           인증 준비를 시작하세요

@@ -15,15 +15,6 @@ import {
   Info,
   X,
 } from 'lucide-react';
-import {
-  ResponsiveContainer,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  Tooltip,
-} from 'recharts';
 import { cn } from '@/lib/utils';
 
 interface EvaluationItem {
@@ -33,17 +24,10 @@ interface EvaluationItem {
   address: string;
   grade: number;
   score: number;
-  indicators: {
-    beds: number;
-    pressureUlcerPrevent: number;
-    adlMaintenance: number;
-    incontinenceCare: number;
-    catheterRatio: number;
-    cognitiveExam: number;
-  };
+  itemGrades: { code: string; grade: number }[];
 }
 
-export default function DataEvaluationPage() {
+export default function EvaluationLookup() {
   const [data, setData] = useState<EvaluationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchWord, setSearchWord] = useState('');
@@ -94,7 +78,7 @@ export default function DataEvaluationPage() {
             평가 적정성 점수 조회
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            건강보험심사평가원(HIRA) 공공데이터 OpenAPI와 실시간 연동되어 전국 요양병원 및 급성기 의료기관의 적정성 평가 등급을 조회합니다.
+            건강보험심사평가원(HIRA)과 실시간 연동되어 전국 요양병원 및 급성기 의료기관의 적정성 평가 등급을 조회합니다. 병원명을 입력해 본인 병원이나 다른 병원의 평가 결과를 확인하세요.
           </p>
         </div>
 
@@ -177,7 +161,7 @@ export default function DataEvaluationPage() {
                 <tr>
                   <td colSpan={6} className="text-center py-12 text-slate-400">
                     <span className="inline-block animate-spin border-2 border-blue-600 border-t-transparent rounded-full w-5 h-5 mr-2 align-middle"></span>
-                    심평원 공공데이터를 동적으로 질의하는 중입니다...
+                    심평원 데이터를 조회하는 중입니다...
                   </td>
                 </tr>
               ) : data.length > 0 ? (
@@ -233,7 +217,7 @@ export default function DataEvaluationPage() {
               ) : (
                 <tr>
                   <td colSpan={6} className="text-center py-12 text-slate-400">
-                    검색 조건에 맞는 공공데이터 적정성 결과가 발견되지 않았습니다.
+                    검색 조건에 맞는 적정성 평가 결과가 없습니다.
                   </td>
                 </tr>
               )}
@@ -259,9 +243,6 @@ export default function DataEvaluationPage() {
                 <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
                   {selectedHospital.type}
                 </span>
-                <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                  병상수: {selectedHospital.indicators.beds}개
-                </span>
               </div>
               <h3 className="font-black text-lg text-slate-800 flex items-center gap-1.5">
                 {selectedHospital.name} 평가 명세
@@ -272,64 +253,29 @@ export default function DataEvaluationPage() {
               </p>
             </div>
 
-            {/* 레이더 분석 차트 */}
-            <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-              <div className="text-xs font-bold text-slate-700 text-center mb-2">
-                종합 평가 성적 레이더망 ({selectedHospital.score}점 · {selectedHospital.grade}등급)
+            {/* 종합 등급 요약 */}
+            <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 text-center">
+              <div className="text-xs font-bold text-slate-700">
+                종합 등급 {selectedHospital.grade}등급 · 항목 평균 환산 {selectedHospital.score}점
               </div>
-              <div className="h-[210px] w-full flex justify-center items-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="80%"
-                    data={[
-                      { name: '욕창 예방', 점수: selectedHospital.indicators.pressureUlcerPrevent },
-                      { name: 'ADL 유지', 점수: selectedHospital.indicators.adlMaintenance },
-                      { name: '요실금 케어', 점수: selectedHospital.indicators.incontinenceCare },
-                      { name: '도뇨관 비삽입', 점수: 100 - selectedHospital.indicators.catheterRatio * 5 }, // 정규화
-                      { name: '인지 검사율', 점수: selectedHospital.indicators.cognitiveExam },
-                    ]}
-                  >
-                    <PolarGrid stroke="#e2e8f0" />
-                    <PolarAngleAxis dataKey="name" tick={{ fontSize: 9, fill: '#64748b' }} />
-                    <PolarRadiusAxis angle={30} domain={[60, 100]} tick={{ fontSize: 8 }} />
-                    <Radar name="지표 점수" dataKey="점수" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} />
-                    <Tooltip />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
+              <p className="text-[10px] text-slate-400 mt-1">
+                점수는 심평원 평가등급(1~5등급)을 표시용으로 환산한 값입니다. 실측 비율 지표가 아닙니다.
+              </p>
             </div>
 
-            {/* 6대 지표 점수 리스트 */}
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="bg-slate-50 p-2.5 rounded-lg">
-                <div className="text-[10px] text-slate-400">욕창 예방/개선율</div>
-                <div className="font-bold text-slate-800 mt-0.5">
-                  {selectedHospital.indicators.pressureUlcerPrevent}%
+            {/* 항목별 평가등급 (심평원 병원평가정보서비스 원본 항목) */}
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              {selectedHospital.itemGrades.map((item) => (
+                <div key={item.code} className="bg-slate-50 p-2.5 rounded-lg text-center">
+                  <div className="text-[10px] text-slate-400">{item.code}</div>
+                  <div className={cn(
+                    'font-bold mt-0.5',
+                    item.grade === 1 ? 'text-amber-600' : item.grade >= 4 ? 'text-rose-600' : 'text-slate-800'
+                  )}>
+                    {item.grade}등급
+                  </div>
                 </div>
-              </div>
-              <div className="bg-slate-50 p-2.5 rounded-lg">
-                <div className="text-[10px] text-slate-400">일상생활수행(ADL) 유지율</div>
-                <div className="font-bold text-slate-800 mt-0.5">
-                  {selectedHospital.indicators.adlMaintenance}%
-                </div>
-              </div>
-              <div className="bg-slate-50 p-2.5 rounded-lg">
-                <div className="text-[10px] text-slate-400">요실금 예방/치료율</div>
-                <div className="font-bold text-slate-800 mt-0.5">
-                  {selectedHospital.indicators.incontinenceCare}%
-                </div>
-              </div>
-              <div className="bg-slate-50 p-2.5 rounded-lg">
-                <div className="text-[10px] text-slate-400">유치도뇨관 삽입률 (낮을수록 우수)</div>
-                <div className={cn(
-                  "font-bold mt-0.5",
-                  selectedHospital.indicators.catheterRatio > 5 ? "text-rose-600" : "text-slate-800"
-                )}>
-                  {selectedHospital.indicators.catheterRatio}%
-                </div>
-              </div>
+              ))}
             </div>
 
             {/* 하단 닫기 */}

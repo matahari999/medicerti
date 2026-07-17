@@ -43,6 +43,13 @@ const pretendardSemiBold = localFont({
   display: 'swap',
 })
 
+const pretendardVariable = localFont({
+  src: '../node_modules/pretendard/dist/public/variable/PretendardVariable.ttf',
+  variable: '--font-pretendard-var',
+  weight: '45 920',
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
   title: {
     default: 'AccrediQ',
@@ -62,7 +69,7 @@ export default function RootLayout({
       <head>
         <meta name="color-scheme" content="light dark" />
       </head>
-      <body className={`${inter.variable} ${gowunDodum.variable} ${gowunBatang.variable} ${nanumGothic.variable} ${jalnanGothic.variable} ${pretendardSemiBold.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${gowunDodum.variable} ${gowunBatang.variable} ${nanumGothic.variable} ${jalnanGothic.variable} ${pretendardSemiBold.variable} ${pretendardVariable.variable} font-sans antialiased`}>
         {children}
       </body>
     </html>

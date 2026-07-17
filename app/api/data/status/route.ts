@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { parseXmlItems } from '@/lib/publicData/xml';
 
 // Fallback Mock 데이터
 const mockStatus = [
@@ -11,6 +13,10 @@ const mockStatus = [
 ];
 
 export async function GET(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
+
   const { searchParams } = new URL(request.url);
   const searchWord = searchParams.get('q') || '';
   const typeFilter = searchParams.get('type') || '';
@@ -37,99 +43,73 @@ export async function GET(request: Request) {
     });
   }
 
-  // 안전하게 API Key 획득 및 인코딩 복원 처리 헬퍼
-  const getDecodedApiKey = (key: string) => {
-    try {
-      let decodedKey = key;
-      while (decodedKey.includes('%')) {
-        const next = decodeURIComponent(decodedKey);
-        if (next === decodedKey) break;
-        decodedKey = next;
-      }
-      return decodedKey;
-    } catch (e) {
-      return key;
-    }
-  };
-
-  // 2. 실제 HIRA 휴폐업 OpenAPI 호출 시도
+  // 2. 실제 HIRA 요양기관개폐업정보조회서비스 호출
+  // 이 API는 병원명으로 직접 검색하지 못하고, 기준년월(crtrYm)에 개업/폐업/휴업한
+  // 기관 목록을 돌려준다 — 그 목록을 받아 이름/주소로 client-side 필터링한다.
   try {
-    const apiEndpoint = 'http://apis.data.go.kr/B551182/hospInfoServicev2/getHospClspList';
-    const decodedKey = getDecodedApiKey(apiKey);
-    
-    // 쿼리 스트링 수동 구성 (자동 이중인코딩 방지)
-    let queryParams = `serviceKey=${encodeURIComponent(decodedKey)}&pageNo=1&numOfRows=20&_type=json`;
-    if (searchWord) {
-      queryParams += `&yadmNm=${encodeURIComponent(searchWord)}`;
-    }
-
+    const now = new Date();
+    const crtrYm = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const apiEndpoint = 'https://apis.data.go.kr/B551182/yadmOpCloInfoService2/getHospPharmacyOpCloList1';
+    const queryParams = `serviceKey=${encodeURIComponent(apiKey)}&pageNo=1&numOfRows=100&crtrYm=${crtrYm}&yadmTp=1&opCloTp=0`;
     const fetchUrl = `${apiEndpoint}?${queryParams}`;
 
     const response = await fetch(fetchUrl, {
       next: { revalidate: 300 }, // 5분 캐싱
-      headers: {
-        Accept: 'application/json',
-      },
     });
 
     if (!response.ok) {
       throw new Error(`OpenAPI 응답 오류: ${response.status}`);
     }
 
-    // JSON 파싱 안전장치
-    const responseText = await response.text();
-    let json: any;
-    try {
-      json = JSON.parse(responseText);
-    } catch (parseErr) {
-      throw new Error(`API가 유효한 JSON을 반환하지 않았습니다. XML 응답이거나 서버 점검 중일 수 있습니다.`);
-    }
+    const xmlText = await response.text();
+    const items = parseXmlItems(xmlText);
 
-    const items = json.response?.body?.items?.item;
+    // 필드 매핑 (estbCnclTp 개폐업휴업구분, estbDd 해당일, yadmNm 요양기관명, clCdNm 종별명, addr 주소)
+    const formattedData = items.map((item, idx) => {
+      const rawDate = item.estbDd || '';
+      const formattedDate = rawDate.length === 8 ? `${rawDate.slice(0, 4)}-${rawDate.slice(4, 6)}-${rawDate.slice(6, 8)}` : rawDate || null;
 
-    if (!items) {
-      return NextResponse.json({
-        data: [],
-        isMock: false,
-        referenceDate: new Date().toISOString().split('T')[0],
-      });
-    }
-
-    const itemArray = Array.isArray(items) ? items : [items];
-
-    // 필요한 스키마로 가공
-    // (OpenAPI 필드 매핑: clspYmd 폐업일, yadmNm 요양기관명, clCdNm 종별명, addr 주소, estbYmd 개설일 등)
-    const formattedData = itemArray.map((item: any, idx: number) => {
-      const closeDate = item.clspYmd || null;
-      const openDate = item.estbYmd || '알수없음';
-      
-      let status = '운영중';
-      if (closeDate) {
+      let status = item.estbCnclTp || '알수없음';
+      let openDate: string | null = null;
+      let closeDate: string | null = null;
+      let pauseStart: string | undefined;
+      if (item.estbCnclTp === '개업') {
+        status = '운영중';
+        openDate = formattedDate;
+      } else if (item.estbCnclTp === '폐업') {
         status = '폐업';
+        closeDate = formattedDate;
+      } else if (item.estbCnclTp === '휴업') {
+        status = '휴업';
+        pauseStart = formattedDate ?? undefined;
       }
 
       return {
-        id: `oc-api-${idx}`,
+        id: `oc-${item.ykiho || idx}`,
         name: item.yadmNm || '이름 없음',
         type: item.clCdNm || '기타',
         address: item.addr || '주소 정보 없음',
-        openDate: openDate.length === 8 ? `${openDate.slice(0, 4)}-${openDate.slice(4, 6)}-${openDate.slice(6, 8)}` : openDate,
-        closeDate: closeDate && closeDate.length === 8 ? `${closeDate.slice(0, 4)}-${closeDate.slice(4, 6)}-${closeDate.slice(6, 8)}` : closeDate,
+        openDate,
+        closeDate,
+        pauseStart,
         status,
       };
     });
 
-    // 필터링 적용
-    const filteredData = formattedData.filter((item: any) => {
+    // 필터링 적용 (병원명/주소 검색 + 유형/상태 필터)
+    const filteredData = formattedData.filter((item) => {
+      const matchSearch = searchWord
+        ? item.name.includes(searchWord) || item.address.includes(searchWord)
+        : true;
       const matchType = typeFilter ? item.type.includes(typeFilter) : true;
       const matchStatus = statusFilter ? item.status === statusFilter : true;
-      return matchType && matchStatus;
+      return matchSearch && matchType && matchStatus;
     });
 
     return NextResponse.json({
       data: filteredData,
       isMock: false,
-      referenceDate: new Date().toISOString().split('T')[0],
+      referenceDate: `${crtrYm.slice(0, 4)}-${crtrYm.slice(4, 6)}`,
     });
   } catch (error: any) {
     // API 호출 에러 발생 시, 안전하게 Mock 데이터로 Fallback

@@ -38,7 +38,7 @@ export function Hero() {
               의료기관인증 갭 분석 플랫폼
             </div>
 
-            <h1 className="font-jalnan text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-[1.15] text-balance">
+            <h1 className="font-jalnan text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-[1.45] text-balance">
               인증 기준,
               <br />
               <span className="bg-gradient-to-r from-teal-300 via-teal-400 to-emerald-400 bg-clip-text text-transparent">서류 더미</span>에서

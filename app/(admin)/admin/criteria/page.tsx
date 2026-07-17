@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { CriteriaUploader } from '@/components/admin/criteria/CriteriaUploader'
 import { CriteriaPdfUploader } from '@/components/admin/criteria/CriteriaPdfUploader'
+import { CriteriaDocList } from '@/components/admin/criteria/CriteriaDocList'
 import { BookOpen, Layers, FileText, ListTree, Hash } from 'lucide-react'
 
 export const metadata: Metadata = { title: '인증기준 관리 — 어드민' }
@@ -73,11 +74,21 @@ export default async function AdminCriteriaPage() {
 
       {/* PDF 업로드 */}
       <div className="bg-white rounded-xl border p-6 space-y-3">
-        <h2 className="text-base font-semibold">인증기준집 PDF 업로드</h2>
+        <h2 className="text-base font-semibold">참고자료 PDF 업로드</h2>
         <p className="text-sm text-muted-foreground">
-          참고용 인증기준집 PDF 파일을 업로드합니다. (스토리지 저장, 10년 유효 URL 생성)
+          인증기준집·사후관리·추진계획 등 참고용 PDF를 업로드합니다.
+          제목과 분류(인증기준집/기타 항목)를 지정하면 일반 구독자의 &quot;인증 자료실&quot; 화면에도 노출됩니다.
         </p>
         <CriteriaPdfUploader />
+      </div>
+
+      {/* 등록된 자료 관리 */}
+      <div className="bg-white rounded-xl border p-6 space-y-3">
+        <h2 className="text-base font-semibold">등록된 참고자료 관리</h2>
+        <p className="text-sm text-muted-foreground">
+          업로드된 자료의 제목·분류를 수정하거나 삭제합니다. 구독자가 자료를 요청하면 여기서 확인해 전달할 수 있습니다.
+        </p>
+        <CriteriaDocList />
       </div>
     </div>
   )

@@ -78,7 +78,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['var(--font-gowun-dodum)', 'var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-pretendard-var)', 'var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         serif: ['var(--font-gowun-batang)', 'ui-serif', 'Georgia', 'serif'],
         jalnan: ['var(--font-jalnan)', 'ui-sans-serif', 'sans-serif'],
         pretendard: ['var(--font-pretendard)', 'var(--font-inter)', 'ui-sans-serif', 'sans-serif'],

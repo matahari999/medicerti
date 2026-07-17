@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { parseXmlItems } from '@/lib/publicData/xml';
 
 // 전국 병원 적정성 평가 고품질 Mock 데이터 (Fallback & 데모용)
 const mockEvaluations = [
@@ -8,15 +10,8 @@ const mockEvaluations = [
     type: '요양병원',
     address: '서울시 영등포구 국회대로 456',
     grade: 1,
-    score: 95.8,
-    indicators: {
-      beds: 180,
-      pressureUlcerPrevent: 98.2, // 욕창 개선/예방율 (%)
-      adlMaintenance: 92.4,       // ADL 유지/개선율 (%)
-      incontinenceCare: 94.1,     // 요실금 관리율 (%)
-      catheterRatio: 2.1,         // 유치도뇨관 삽입률 (%) - 낮을수록 우수
-      cognitiveExam: 96.5,        // 인지기능 검사 실시율 (%)
-    }
+    score: 100,
+    itemGrades: [{ code: 'asmGrd01', grade: 1 }, { code: 'asmGrd04', grade: 1 }, { code: 'asmGrd07', grade: 1 }, { code: 'asmGrd12', grade: 1 }, { code: 'asmGrd19', grade: 1 }]
   },
   {
     code: 'YKIHO002',
@@ -24,15 +19,8 @@ const mockEvaluations = [
     type: '요양병원',
     address: '인천시 부평구 경인로 789',
     grade: 2,
-    score: 88.5,
-    indicators: {
-      beds: 210,
-      pressureUlcerPrevent: 89.5,
-      adlMaintenance: 87.2,
-      incontinenceCare: 88.0,
-      catheterRatio: 4.8,
-      cognitiveExam: 91.2,
-    }
+    score: 80,
+    itemGrades: [{ code: 'asmGrd01', grade: 2 }, { code: 'asmGrd04', grade: 2 }, { code: 'asmGrd07', grade: 2 }, { code: 'asmGrd12', grade: 1 }, { code: 'asmGrd19', grade: 2 }]
   },
   {
     code: 'YKIHO003',
@@ -40,15 +28,8 @@ const mockEvaluations = [
     type: '요양병원',
     address: '경기도 성남시 분당구 황새울로 45',
     grade: 1,
-    score: 93.2,
-    indicators: {
-      beds: 150,
-      pressureUlcerPrevent: 94.6,
-      adlMaintenance: 90.1,
-      incontinenceCare: 92.3,
-      catheterRatio: 3.0,
-      cognitiveExam: 95.0,
-    }
+    score: 100,
+    itemGrades: [{ code: 'asmGrd01', grade: 1 }, { code: 'asmGrd04', grade: 1 }, { code: 'asmGrd07', grade: 1 }, { code: 'asmGrd12', grade: 1 }, { code: 'asmGrd19', grade: 1 }]
   },
   {
     code: 'YKIHO004',
@@ -56,15 +37,8 @@ const mockEvaluations = [
     type: '요양병원',
     address: '부산시 해운대구 우동 987',
     grade: 3,
-    score: 79.4,
-    indicators: {
-      beds: 120,
-      pressureUlcerPrevent: 78.2,
-      adlMaintenance: 81.0,
-      incontinenceCare: 80.5,
-      catheterRatio: 7.2,
-      cognitiveExam: 84.1,
-    }
+    score: 60,
+    itemGrades: [{ code: 'asmGrd01', grade: 3 }, { code: 'asmGrd04', grade: 3 }, { code: 'asmGrd07', grade: 3 }, { code: 'asmGrd12', grade: 2 }, { code: 'asmGrd19', grade: 3 }]
   },
   {
     code: 'YKIHO005',
@@ -72,15 +46,8 @@ const mockEvaluations = [
     type: '요양병원',
     address: '부산시 금정구 중앙대로 1004',
     grade: 1,
-    score: 94.5,
-    indicators: {
-      beds: 145,
-      pressureUlcerPrevent: 95.8,
-      adlMaintenance: 91.5,
-      incontinenceCare: 93.0,
-      catheterRatio: 2.8,
-      cognitiveExam: 95.8,
-    }
+    score: 100,
+    itemGrades: [{ code: 'asmGrd01', grade: 1 }, { code: 'asmGrd04', grade: 1 }, { code: 'asmGrd07', grade: 1 }, { code: 'asmGrd12', grade: 1 }, { code: 'asmGrd19', grade: 1 }]
   },
   {
     code: 'YKIHO006',
@@ -88,15 +55,8 @@ const mockEvaluations = [
     type: '요양병원',
     address: '대전시 중구 계룡로 777',
     grade: 1,
-    score: 93.8,
-    indicators: {
-      beds: 160,
-      pressureUlcerPrevent: 94.2,
-      adlMaintenance: 90.5,
-      incontinenceCare: 91.0,
-      catheterRatio: 3.2,
-      cognitiveExam: 94.5,
-    }
+    score: 100,
+    itemGrades: [{ code: 'asmGrd01', grade: 1 }, { code: 'asmGrd04', grade: 1 }, { code: 'asmGrd07', grade: 1 }, { code: 'asmGrd12', grade: 1 }, { code: 'asmGrd19', grade: 1 }]
   },
   {
     code: 'YKIHO007',
@@ -104,15 +64,8 @@ const mockEvaluations = [
     type: '요양병원',
     address: '전북 전주시 완산구 용머리로 12',
     grade: 1,
-    score: 97.2,
-    indicators: {
-      beds: 280,
-      pressureUlcerPrevent: 99.0,
-      adlMaintenance: 95.2,
-      incontinenceCare: 96.5,
-      catheterRatio: 1.5,
-      cognitiveExam: 98.0,
-    }
+    score: 100,
+    itemGrades: [{ code: 'asmGrd01', grade: 1 }, { code: 'asmGrd04', grade: 1 }, { code: 'asmGrd07', grade: 1 }, { code: 'asmGrd12', grade: 1 }, { code: 'asmGrd19', grade: 1 }]
   },
   {
     code: 'YKIHO008',
@@ -120,15 +73,8 @@ const mockEvaluations = [
     type: '요양병원',
     address: '울산시 남구 번영로 15',
     grade: 2,
-    score: 87.5,
-    indicators: {
-      beds: 130,
-      pressureUlcerPrevent: 88.5,
-      adlMaintenance: 86.0,
-      incontinenceCare: 87.2,
-      catheterRatio: 5.2,
-      cognitiveExam: 90.0,
-    }
+    score: 80,
+    itemGrades: [{ code: 'asmGrd01', grade: 2 }, { code: 'asmGrd04', grade: 2 }, { code: 'asmGrd07', grade: 2 }, { code: 'asmGrd12', grade: 1 }, { code: 'asmGrd19', grade: 2 }]
   },
   {
     code: 'YKIHO009',
@@ -136,15 +82,8 @@ const mockEvaluations = [
     type: '요양병원',
     address: '경남 창원시 성산구 마디미로 8',
     grade: 2,
-    score: 89.9,
-    indicators: {
-      beds: 195,
-      pressureUlcerPrevent: 90.5,
-      adlMaintenance: 88.0,
-      incontinenceCare: 89.0,
-      catheterRatio: 4.0,
-      cognitiveExam: 92.5,
-    }
+    score: 80,
+    itemGrades: [{ code: 'asmGrd01', grade: 2 }, { code: 'asmGrd04', grade: 2 }, { code: 'asmGrd07', grade: 2 }, { code: 'asmGrd12', grade: 1 }, { code: 'asmGrd19', grade: 2 }]
   },
   {
     code: 'YKIHO010',
@@ -152,15 +91,8 @@ const mockEvaluations = [
     type: '요양병원',
     address: '강원도 춘천시 영서로 302',
     grade: 3,
-    score: 81.2,
-    indicators: {
-      beds: 90,
-      pressureUlcerPrevent: 82.0,
-      adlMaintenance: 80.5,
-      incontinenceCare: 81.0,
-      catheterRatio: 6.8,
-      cognitiveExam: 83.5,
-    }
+    score: 60,
+    itemGrades: [{ code: 'asmGrd01', grade: 3 }, { code: 'asmGrd04', grade: 3 }, { code: 'asmGrd07', grade: 3 }, { code: 'asmGrd12', grade: 2 }, { code: 'asmGrd19', grade: 3 }]
   },
   {
     code: 'YKIHO011',
@@ -168,15 +100,8 @@ const mockEvaluations = [
     type: '요양병원',
     address: '부산시 동래구 충렬대로 19',
     grade: 1,
-    score: 95.0,
-    indicators: {
-      beds: 200,
-      pressureUlcerPrevent: 97.0,
-      adlMaintenance: 91.8,
-      incontinenceCare: 93.5,
-      catheterRatio: 2.3,
-      cognitiveExam: 96.0,
-    }
+    score: 100,
+    itemGrades: [{ code: 'asmGrd01', grade: 1 }, { code: 'asmGrd04', grade: 1 }, { code: 'asmGrd07', grade: 1 }, { code: 'asmGrd12', grade: 1 }, { code: 'asmGrd19', grade: 1 }]
   },
   {
     code: 'YKIHO012',
@@ -184,15 +109,8 @@ const mockEvaluations = [
     type: '요양병원',
     address: '인천시 미추홀구 경인로 222',
     grade: 2,
-    score: 89.0,
-    indicators: {
-      beds: 170,
-      pressureUlcerPrevent: 90.2,
-      adlMaintenance: 87.8,
-      incontinenceCare: 88.5,
-      catheterRatio: 4.5,
-      cognitiveExam: 91.0,
-    }
+    score: 80,
+    itemGrades: [{ code: 'asmGrd01', grade: 2 }, { code: 'asmGrd04', grade: 2 }, { code: 'asmGrd07', grade: 2 }, { code: 'asmGrd12', grade: 1 }, { code: 'asmGrd19', grade: 2 }]
   },
   {
     code: 'YKIHO013',
@@ -200,15 +118,8 @@ const mockEvaluations = [
     type: '정신병원',
     address: '충북 청주시 상당구 상당로 15',
     grade: 3,
-    score: 77.8,
-    indicators: {
-      beds: 130,
-      pressureUlcerPrevent: 80.2,
-      adlMaintenance: 78.0,
-      incontinenceCare: 77.5,
-      catheterRatio: 8.0,
-      cognitiveExam: 82.5,
-    }
+    score: 60,
+    itemGrades: [{ code: 'asmGrd01', grade: 3 }, { code: 'asmGrd04', grade: 3 }, { code: 'asmGrd07', grade: 3 }, { code: 'asmGrd12', grade: 2 }, { code: 'asmGrd19', grade: 3 }]
   },
   {
     code: 'YKIHO014',
@@ -216,15 +127,8 @@ const mockEvaluations = [
     type: '정신병원',
     address: '대구시 수성구 달구벌대로 55',
     grade: 2,
-    score: 86.7,
-    indicators: {
-      beds: 160,
-      pressureUlcerPrevent: 88.0,
-      adlMaintenance: 85.5,
-      incontinenceCare: 87.0,
-      catheterRatio: 5.0,
-      cognitiveExam: 89.8,
-    }
+    score: 80,
+    itemGrades: [{ code: 'asmGrd01', grade: 2 }, { code: 'asmGrd04', grade: 2 }, { code: 'asmGrd07', grade: 2 }, { code: 'asmGrd12', grade: 1 }, { code: 'asmGrd19', grade: 2 }]
   },
   {
     code: 'YKIHO015',
@@ -232,19 +136,16 @@ const mockEvaluations = [
     type: '급성기병원',
     address: '서울시 중구 세종대로 12',
     grade: 1,
-    score: 98.1,
-    indicators: {
-      beds: 650,
-      pressureUlcerPrevent: 99.1,
-      adlMaintenance: 96.0,
-      incontinenceCare: 97.5,
-      catheterRatio: 1.2,
-      cognitiveExam: 99.0,
-    }
+    score: 100,
+    itemGrades: [{ code: 'asmGrd01', grade: 1 }, { code: 'asmGrd04', grade: 1 }, { code: 'asmGrd07', grade: 1 }, { code: 'asmGrd12', grade: 1 }, { code: 'asmGrd19', grade: 1 }]
   }
 ];
 
 export async function GET(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
+
   const { searchParams } = new URL(request.url);
   const searchWord = searchParams.get('q') || '';
   const gradeFilter = searchParams.get('grade') ? parseInt(searchParams.get('grade') || '0', 10) : 0;
@@ -272,66 +173,69 @@ export async function GET(request: Request) {
     });
   }
 
-  // 2. 실제 건강보험심사평가원(HIRA) 적정성 평가 API 호출 시도
+  // 2. 실제 건강보험심사평가원(HIRA) 병원평가정보서비스 호출
+  // 이 API는 병원명이 아니라 암호화된 요양기호(ykiho)로만 조회되므로, 먼저
+  // 병원정보서비스에서 이름으로 ykiho를 찾은 뒤 그 기호로 평가등급을 조회하는
+  // 2단계 체이닝이 필요하다.
   try {
-    // 공공데이터포털 - 건강보험심사평가원 의료기관별 적정성 평가 결과 조회 API
-    const url = new URL('http://apis.data.go.kr/B551182/hospAsmtInfoService/getHospAsmtEvaluationList');
-    url.searchParams.set('serviceKey', apiKey);
-    url.searchParams.set('pageNo', '1');
-    url.searchParams.set('numOfRows', '30');
-    url.searchParams.set('_type', 'json');
+    const basisUrl = new URL('http://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList');
+    basisUrl.searchParams.set('serviceKey', apiKey);
+    basisUrl.searchParams.set('pageNo', '1');
+    basisUrl.searchParams.set('numOfRows', '8');
+    basisUrl.searchParams.set('_type', 'json');
     if (searchWord) {
-      url.searchParams.set('yadmNm', searchWord);
+      basisUrl.searchParams.set('yadmNm', searchWord);
     }
 
-    const response = await fetch(url.toString(), {
-      next: { revalidate: 300 }, // 5분 캐시
+    const basisRes = await fetch(basisUrl.toString(), {
+      next: { revalidate: 300 },
       headers: { Accept: 'application/json' },
     });
+    if (!basisRes.ok) throw new Error(`병원정보서비스 응답 오류: ${basisRes.status}`);
 
-    if (!response.ok) {
-      throw new Error(`OpenAPI 응답 오류: ${response.status}`);
-    }
+    const basisJson = await basisRes.json();
+    const basisItems = basisJson.response?.body?.items?.item;
+    const hospitals = basisItems ? (Array.isArray(basisItems) ? basisItems : [basisItems]) : [];
 
-    const json = await response.json();
-    const items = json.response?.body?.items?.item;
+    // 각 병원의 ykiho로 평가등급 조회 (평가 이력이 없는 병원은 결과가 비어 자동 제외됨)
+    const evaluated = await Promise.all(
+      hospitals.map(async (h: any) => {
+        if (!h.ykiho) return null;
+        const asmUrl = `https://apis.data.go.kr/B551182/hospAsmInfoService1/getHospAsmInfo1?serviceKey=${encodeURIComponent(apiKey)}&pageNo=1&numOfRows=1&ykiho=${encodeURIComponent(h.ykiho)}`;
+        const asmRes = await fetch(asmUrl, { next: { revalidate: 300 } });
+        if (!asmRes.ok) return null;
 
-    if (!items) {
-      return NextResponse.json({
-        data: [],
-        isMock: false,
-        referenceDate: new Date().toISOString().split('T')[0],
-      });
-    }
+        const asmItems = parseXmlItems(await asmRes.text());
+        const asm = asmItems[0];
+        if (!asm) return null;
 
-    const itemArray = Array.isArray(items) ? items : [items];
+        // asmGrdNN 형태의 항목별 등급 필드를 전부 모아 종합등급을 평균으로 산출
+        const itemGrades = Object.entries(asm)
+          .filter(([key]) => /^asmGrd\d+$/.test(key))
+          .map(([key, value]) => ({ code: key, grade: parseInt(value, 10) }))
+          .filter((g) => !Number.isNaN(g.grade));
+        if (itemGrades.length === 0) return null;
 
-    // 심평원 API 응답 항목을 프론트 스키마에 맞게 정규화
-    const formattedData = itemArray.map((item: any, idx: number) => {
-      // 심평원 원본 데이터 매핑 (일반적으로 등급은 asmtGrde, 점수는 asmtScore 등등)
-      const grade = item.asmtGrde ? parseInt(item.asmtGrde, 10) : (idx % 3) + 1; // API 응답에 등급이 없을 시 더미 배분
-      const score = item.asmtScore ? parseFloat(item.asmtScore) : 95.0 - (grade * 5.5) + (idx % 2);
-      
-      return {
-        code: item.ykiho || `YKIHO${String(idx + 100).padStart(3, '0')}`,
-        name: item.yadmNm || '의료기관',
-        type: item.clCdNm || '요양병원',
-        address: item.addr || '주소 정보가 제공되지 않습니다.',
-        grade,
-        score: Math.round(score * 10) / 10,
-        indicators: {
-          beds: item.gdrBdsCnt ? parseInt(item.gdrBdsCnt, 10) : 120 + (idx * 15),
-          pressureUlcerPrevent: 100 - (grade * 4.2) + (idx % 3),
-          adlMaintenance: 98 - (grade * 3.8) + (idx % 2),
-          incontinenceCare: 95 - (grade * 3.5),
-          catheterRatio: (grade * 2.1) + (idx % 2),
-          cognitiveExam: 100 - (grade * 2.5),
-        }
-      };
-    });
+        const grade = Math.round(itemGrades.reduce((sum, g) => sum + g.grade, 0) / itemGrades.length);
+        // score는 등급(1~5)에서 결정론적으로 환산한 값 — 실측 지표가 아니라 등급의 표시용 변환임
+        const score = Math.round((100 - (grade - 1) * 20) * 10) / 10;
+
+        return {
+          code: h.ykiho,
+          name: h.yadmNm || asm.yadmNm || '의료기관',
+          type: h.clCdNm || asm.clCdNm || '요양병원',
+          address: h.addr || '주소 정보가 제공되지 않습니다.',
+          grade,
+          score,
+          itemGrades,
+        };
+      })
+    );
+
+    const formattedData = evaluated.filter((item): item is NonNullable<typeof item> => item !== null);
 
     // 쿼리 필터 추가 적용
-    const filteredData = formattedData.filter((item: any) => {
+    const filteredData = formattedData.filter((item) => {
       const matchGrade = gradeFilter ? item.grade === gradeFilter : true;
       const matchType = typeFilter ? item.type === typeFilter : true;
       const matchRegion = regionFilter ? item.address.includes(regionFilter) : true;
