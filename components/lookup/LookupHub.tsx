@@ -23,6 +23,11 @@ interface HospitalRecord {
   [key: string]: unknown;
 }
 
+interface CategoryResult {
+  items: HospitalRecord[];
+  isMock: boolean;
+}
+
 const HOSPITAL_TYPES = [
   { type: 'codes',       label: '의료기관 코드',    path: '/codes',       apiPath: '/api/data/codes' },
   { type: 'details',     label: '상세 정보',        path: '/details',     apiPath: '/api/data/details' },
@@ -51,7 +56,7 @@ export default function LookupHub({ basePath, title, description, showApiKeyNoti
   const [query, setQuery]     = useState('');
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [results, setResults] = useState<Record<string, HospitalRecord[]>>({});
+  const [results, setResults] = useState<Record<string, CategoryResult>>({});
 
   const search = async () => {
     if (query.trim().length < 2) return;
@@ -63,9 +68,9 @@ export default function LookupHub({ basePath, title, description, showApiKeyNoti
           try {
             const res = await fetch(`${t.apiPath}?q=${encodeURIComponent(query.trim())}`);
             const json = await res.json();
-            return [t.type, (json.data ?? []) as HospitalRecord[]] as const;
+            return [t.type, { items: (json.data ?? []) as HospitalRecord[], isMock: !!json.isMock }] as const;
           } catch {
-            return [t.type, [] as HospitalRecord[]] as const;
+            return [t.type, { items: [] as HospitalRecord[], isMock: false }] as const;
           }
         })
       );
@@ -75,7 +80,7 @@ export default function LookupHub({ basePath, title, description, showApiKeyNoti
     }
   };
 
-  const totalMatches = Object.values(results).reduce((sum, arr) => sum + arr.length, 0);
+  const totalMatches = Object.values(results).reduce((sum, r) => sum + r.items.length, 0);
 
   return (
     <div className="space-y-6 fade-in">
@@ -122,12 +127,20 @@ export default function LookupHub({ basePath, title, description, showApiKeyNoti
         {searched && !loading && totalMatches > 0 && (
           <div className="mt-3 space-y-3">
             {HOSPITAL_TYPES.map((t) => {
-              const items = results[t.type] ?? [];
+              const result = results[t.type];
+              const items = result?.items ?? [];
               if (items.length === 0) return null;
               return (
                 <div key={t.type} className="border border-slate-100 rounded-lg overflow-hidden">
                   <div className="px-3 py-2 bg-slate-50 flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-600">{t.label} ({items.length})</span>
+                    <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                      {t.label} ({items.length})
+                      {result?.isMock && (
+                        <span className="text-[10px] font-bold text-amber-700 bg-amber-100 border border-amber-200 px-1.5 py-0.5 rounded-full">
+                          Mock 데이터
+                        </span>
+                      )}
+                    </span>
                     <Link href={basePath + t.path} className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-0.5">
                       전체보기 <ChevronRight size={12} />
                     </Link>

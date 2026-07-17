@@ -27,7 +27,9 @@ interface HospitalCodeItem {
 const SOURCE_META = {
   source: '건강보험심사평가원 (HIRA)',
   sourceUrl: 'https://www.hira.or.kr/rd/hosp/getHospInfoByPagView.do',
-  apiName: 'HIRA OpenAPI - 의료기관 코드정보',
+  // 실제 요청 API는 병원정보서비스(hospInfoServicev2/getHospBasisList)다.
+  // HIRA의 "병원코드정보서비스"는 이 화면과 무관한 별도 코드사전 API라 이름을 붙이지 않는다.
+  apiName: 'HIRA OpenAPI - 병원정보서비스',
 };
 
 export default function CodesLookup({ basePath }: { basePath: string }) {
