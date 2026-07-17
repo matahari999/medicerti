@@ -108,6 +108,12 @@ table.data tr.tall td{height:40px;}
 .chk:hover{background:#d4e4ff;box-shadow:inset 0 0 0 1px #6aa3ff;}
 .chk.on{color:#0b5; font-weight:700;}
 
+/* ── 클릭해서 입력하는 날짜 필드(YYYY년 월 일 자리 대체) ── */
+.datefill{cursor:text;outline:none;display:inline-block;min-width:76px;text-align:center;background:#fffef0;border-bottom:1px dashed #d4a600;border-radius:3px;padding:0 3px;}
+.datefill:hover{background:#fff9d6;}
+.datefill:focus{background:#fff3b0;box-shadow:inset 0 0 0 1px #d4a600;}
+.datefill:empty::before{content:'YYYY. MM. DD';color:#bbb;font-size:7.5pt;font-style:italic;}
+
 /* ── 푸터 ── */
 .form-footer{margin-top:8px;border-top:1px solid #888;padding-top:5px;font-size:7pt;color:#666;display:flex;justify-content:space-between;}
 
@@ -116,6 +122,8 @@ table.data tr.tall td{height:40px;}
   [contenteditable="true"]{background:none !important;box-shadow:none !important;}
   [contenteditable="true"]:empty::before{content:none !important;}
   .chk:hover{background:none !important;box-shadow:none !important;}
+  .datefill{background:none !important;box-shadow:none !important;border-bottom:1px solid #999;}
+  .datefill:empty::before{content:none !important;}
 }
 </style>`;
 
@@ -161,12 +169,50 @@ export const CHECKBOX_SCRIPT = `
   })();
 `;
 
+// 서식 본문의 날짜 자리("(YYYY년 월 일)", "__년 __월 __일")를 클릭해서 입력·수정할 수 있는
+// 날짜 필드(span.datefill, contenteditable)로 바꾸는 스크립트. 체크박스와 마찬가지로 렌더링된
+// 최종 DOM에서 일괄 처리하므로 전체 서식에 동일하게 적용된다. 입력한 날짜는 인쇄에도 그대로 찍힌다.
+export const DATEFILL_SCRIPT = `
+  (function(){
+    var RE = /\\(?\\s*(?:YYYY)?\\s*년\\s+월\\s+일\\s*\\)?/g;
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+    var targets = [];
+    while (walker.nextNode()) {
+      var node = walker.currentNode;
+      var pe = node.parentElement;
+      if (!pe) continue;
+      if (pe.closest('script,style')) continue;
+      if (pe.classList.contains('datefill') || pe.classList.contains('chk')) continue;
+      RE.lastIndex = 0;
+      if (RE.test(node.nodeValue)) targets.push(node);
+    }
+    targets.forEach(function(node){
+      var val = node.nodeValue;
+      var frag = document.createDocumentFragment();
+      var last = 0, m;
+      RE.lastIndex = 0;
+      while ((m = RE.exec(val)) !== null) {
+        if (m[0].length === 0) { RE.lastIndex++; continue; }
+        if (m.index > last) frag.appendChild(document.createTextNode(val.slice(last, m.index)));
+        var span = document.createElement('span');
+        span.className = 'datefill';
+        span.contentEditable = 'true';
+        frag.appendChild(span);
+        last = m.index + m[0].length;
+      }
+      if (last < val.length) frag.appendChild(document.createTextNode(val.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    });
+  })();
+`;
+
 // 빈 데이터 셀(작성자가 채워야 할 칸)을 화면에서 바로 입력 가능하게 만드는 스크립트.
 // 각 makeXxxTemp() 함수를 개별로 손댈 필요 없이, 렌더링된 최종 DOM에서 "라벨이 없는
 // 빈 칸"만 자동으로 찾아 contenteditable로 전환한다 — 인쇄 시에는 CSS로 입력 스타일만 제거되고
 // 타이핑된 내용은 그대로 인쇄된다.
 const FILLABLE_SCRIPT = `
   ${CHECKBOX_SCRIPT}
+  ${DATEFILL_SCRIPT}
   document.querySelectorAll('table.data td').forEach(function(td){
     if (td.children.length === 0 && td.textContent.trim() === '' && !td.classList.contains('hd')) {
       td.contentEditable = 'true';
@@ -179,7 +225,7 @@ const FILLABLE_SCRIPT = `
     if (box.textContent.trim() === '') box.contentEditable = 'true';
   });
   const hint = document.createElement('div');
-  hint.textContent = '💡 노란 빈 칸은 클릭해서 입력, ☐ 네모칸은 클릭하면 ☑ 로 체크됩니다';
+  hint.textContent = '💡 노란 빈 칸·날짜 칸은 클릭해서 입력, ☐ 네모칸은 클릭하면 ☑ 로 체크됩니다';
   hint.style.cssText = 'position:fixed;top:10px;left:10px;padding:6px 12px;background:#fff3b0;color:#5c4a00;border:1px solid #d4a600;border-radius:6px;font-size:12px;z-index:9999;';
   document.body.appendChild(hint);
   window.addEventListener('beforeprint', () => hint.style.display = 'none');
