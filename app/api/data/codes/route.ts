@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-// Fallback Mock 데이터
+// Fallback Mock 데이터 (실 API(hospInfoServicev2/getHospBasisList)에 병상수·운영상태 필드가 없어 실데이터와 동일한 필드 구성만 유지)
 const mockCodes = [
-  { code: 'NR001', name: '미소들실버케어요양병원', type: '요양병원', address: '서울시 구로구 개봉로15길 41', beds: 290, status: '운영중' },
-  { code: 'NR002', name: '보바스기념병원', type: '요양병원', address: '경기도 성남시 분당구 대왕판교로 155-7', beds: 224, status: '운영중' },
-  { code: 'NR003', name: '참예원요양병원', type: '요양병원', address: '서울시 강남구 개포로 419', beds: 160, status: '운영중' },
-  { code: 'AC001', name: '서울대학교병원', type: '급성기병원', address: '서울시 종로구 대학로 101', beds: 1782, status: '운영중' },
-  { code: 'AC002', name: '삼성서울병원', type: '급성기병원', address: '서울시 강남구 일원로 81', beds: 1985, status: '운영중' },
-  { code: 'AC003', name: '연세대학교 세브란스병원', type: '급성기병원', address: '서울시 서대문구 연세로 50-1', beds: 2437, status: '운영중' },
+  { code: 'NR001', name: '미소들실버케어요양병원', type: '요양병원', address: '서울시 구로구 개봉로15길 41', tel: '02-2613-0007', estbDd: '2015-03-12', doctors: 14 },
+  { code: 'NR002', name: '보바스기념병원', type: '요양병원', address: '경기도 성남시 분당구 대왕판교로 155-7', tel: '031-786-3000', estbDd: '2002-05-20', doctors: 15 },
+  { code: 'NR003', name: '참예원요양병원', type: '요양병원', address: '서울시 강남구 개포로 419', tel: '02-3412-2252', estbDd: '2010-11-05', doctors: 10 },
+  { code: 'AC001', name: '서울대학교병원', type: '급성기병원', address: '서울시 종로구 대학로 101', tel: '1588-5700', estbDd: '1978-10-15', doctors: 1544 },
+  { code: 'AC002', name: '삼성서울병원', type: '급성기병원', address: '서울시 강남구 일원로 81', tel: '02-3410-2000', estbDd: '1994-11-09', doctors: 1200 },
+  { code: 'AC003', name: '연세대학교 세브란스병원', type: '급성기병원', address: '서울시 서대문구 연세로 50-1', tel: '02-2228-0114', estbDd: '1885-04-10', doctors: 1350 },
 ];
 
 export async function GET(request: Request) {
@@ -77,15 +77,21 @@ export async function GET(request: Request) {
     // 배열 형태 보장
     const itemArray = Array.isArray(items) ? items : [items];
 
-    // 필요한 스키마로 가공
-    const formattedData = itemArray.map((item: any) => ({
-      code: item.ykiho || 'N/A',
-      name: item.yadmNm || '이름 없음',
-      type: item.clCdNm || '기타',
-      address: item.addr || '주소 정보 없음',
-      beds: item.gdrBdsCnt ? parseInt(item.gdrBdsCnt, 10) : 0,
-      status: '운영중',
-    }));
+    // 필요한 스키마로 가공 (이 API는 병상수·운영상태 필드를 제공하지 않아 실제 존재하는
+    // 필드만 매핑한다 — 없는 값을 0이나 고정 문자열로 채우지 않는다)
+    const formattedData = itemArray.map((item: any) => {
+      const raw = String(item.estbDd ?? '');
+      const estbDd = raw.length === 8 ? `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}` : '';
+      return {
+        code: item.ykiho || 'N/A',
+        name: item.yadmNm || '이름 없음',
+        type: item.clCdNm || '기타',
+        address: item.addr || '주소 정보 없음',
+        tel: item.telno || '',
+        estbDd,
+        doctors: item.drTotCnt ? parseInt(item.drTotCnt, 10) : null,
+      };
+    });
 
     // 병원 유형별 필터가 있는 경우 적용
     const filteredData = typeFilter

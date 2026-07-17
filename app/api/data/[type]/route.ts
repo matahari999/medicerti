@@ -13,18 +13,18 @@ const mockDataMap: Record<string, any[]> = {
     { code: 'H10', name: '삼성서울병원', type: '급성기병원', address: '서울시 강남구 일원로 81', beds: 1985, status: '운영중' },
   ],
   details: [
-    { code: 'H01', name: '미소들실버케어요양병원', tel: '02-2613-0007', beds: 290, doctors: 14, nurses: 68, address: '서울시 구로구 개봉로15길 41' },
-    { code: 'H02', name: '보바스기념병원', tel: '031-786-3000', beds: 224, doctors: 15, nurses: 82, address: '경기도 성남시 분당구 대왕판교로 155-7' },
-    { code: 'H03', name: '참예원요양병원', tel: '02-3412-2252', beds: 160, doctors: 10, nurses: 48, address: '서울시 강남구 개포로 419' },
-    { code: 'H04', name: '인창요양병원', tel: '051-464-5000', beds: 430, doctors: 22, nurses: 110, address: '부산시 동구 중앙대로 365' },
-    { code: 'H05', name: '희연요양병원', tel: '055-270-2500', beds: 380, doctors: 18, nurses: 90, address: '경남 창원시 성산구 원이대로 848' },
-    { code: 'H06', name: '매그너스재활요양병원', tel: '031-591-3300', beds: 195, doctors: 12, nurses: 50, address: '경기도 남양주시 수동면 비룡로 782' },
-    { code: 'H07', name: '의정부카네이션요양병원', tel: '031-878-1004', beds: 180, doctors: 11, nurses: 42, address: '경기도 의정부시 평화로 312' },
-    { code: 'H08', name: '효사랑가족요양병원', tel: '063-220-0114', beds: 280, doctors: 16, nurses: 65, address: '전북 전주시 완산구 용머리로 12' },
-    { code: 'H09', name: '서울대학교병원', tel: '02-2072-2114', beds: 1782, doctors: 480, nurses: 1200, address: '서울시 종로구 대학로 101' },
-    { code: 'H10', name: '삼성서울병원', tel: '02-3410-2000', beds: 1985, doctors: 510, nurses: 1350, address: '서울시 강남구 일원로 81' },
-    { code: 'H11', name: '서울아산병원', tel: '02-3010-3333', beds: 2715, doctors: 580, nurses: 1560, address: '서울시 송파구 올림픽로43길 88' },
-    { code: 'H12', name: '연세대학교 세브란스병원', tel: '02-2228-0114', beds: 2437, doctors: 540, nurses: 1420, address: '서울시 서대문구 연세로 50-1' },
+    { code: 'H01', name: '미소들실버케어요양병원', type: '요양병원', tel: '02-2613-0007', doctors: 14, estbDd: '2015-03-12', address: '서울시 구로구 개봉로15길 41' },
+    { code: 'H02', name: '보바스기념병원', type: '요양병원', tel: '031-786-3000', doctors: 15, estbDd: '2002-05-20', address: '경기도 성남시 분당구 대왕판교로 155-7' },
+    { code: 'H03', name: '참예원요양병원', type: '요양병원', tel: '02-3412-2252', doctors: 10, estbDd: '2010-11-05', address: '서울시 강남구 개포로 419' },
+    { code: 'H04', name: '인창요양병원', type: '요양병원', tel: '051-464-5000', doctors: 22, estbDd: '2009-04-01', address: '부산시 동구 중앙대로 365' },
+    { code: 'H05', name: '희연요양병원', type: '요양병원', tel: '055-270-2500', doctors: 18, estbDd: '2011-06-15', address: '경남 창원시 성산구 원이대로 848' },
+    { code: 'H06', name: '매그너스재활요양병원', type: '재활병원', tel: '031-591-3300', doctors: 12, estbDd: '2013-09-10', address: '경기도 남양주시 수동면 비룡로 782' },
+    { code: 'H07', name: '의정부카네이션요양병원', type: '요양병원', tel: '031-878-1004', doctors: 11, estbDd: '2008-02-20', address: '경기도 의정부시 평화로 312' },
+    { code: 'H08', name: '효사랑가족요양병원', type: '요양병원', tel: '063-220-0114', doctors: 16, estbDd: '2012-07-01', address: '전북 전주시 완산구 용머리로 12' },
+    { code: 'H09', name: '서울대학교병원', type: '급성기병원', tel: '02-2072-2114', doctors: 480, estbDd: '1978-10-15', address: '서울시 종로구 대학로 101' },
+    { code: 'H10', name: '삼성서울병원', type: '급성기병원', tel: '02-3410-2000', doctors: 510, estbDd: '1994-11-09', address: '서울시 강남구 일원로 81' },
+    { code: 'H11', name: '서울아산병원', type: '급성기병원', tel: '02-3010-3333', doctors: 580, estbDd: '1989-06-01', address: '서울시 송파구 올림픽로43길 88' },
+    { code: 'H12', name: '연세대학교 세브란스병원', type: '급성기병원', tel: '02-2228-0114', doctors: 540, estbDd: '1885-04-10', address: '서울시 서대문구 연세로 50-1' },
   ],
   'cert-status': [
     { code: 'C01', name: '미소들실버케어요양병원', status: '인증 완료', certNo: 'CERT-2025-104', certPeriod: '2025-06-01 ~ 2029-05-31', org: '의료기관평가인증원' },
@@ -154,15 +154,21 @@ export async function GET(
     const itemArray = Array.isArray(items) ? items : [items];
 
     // details 스키마 정규화 (이 지점에 도달하는 유일한 type)
-    const formattedData = itemArray.map((item: any, idx: number) => ({
-      code: item.ykiho || `H${idx}`,
-      name: item.yadmNm || '의료기관',
-      tel: item.telno || '02-0000-0000',
-      beds: item.gdrBdsCnt ? parseInt(item.gdrBdsCnt, 10) : 120,
-      doctors: item.drTotCnt ? parseInt(item.drTotCnt, 10) : 8,
-      nurses: item.mfrnBdsCnt ? parseInt(item.mfrnBdsCnt, 10) : 30, // 가상 비례
-      address: item.addr || '주소 정보 없음',
-    }));
+    // hospInfoServicev2/getHospBasisList는 병상수·간호사수 필드를 제공하지 않으므로
+    // 없는 값을 임의 상수로 채우지 않고, 실제 존재하는 필드(종별·개설일·의사수)만 매핑한다.
+    const formattedData = itemArray.map((item: any, idx: number) => {
+      const raw = String(item.estbDd ?? '');
+      const estbDd = raw.length === 8 ? `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}` : '';
+      return {
+        code: item.ykiho || `H${idx}`,
+        name: item.yadmNm || '의료기관',
+        type: item.clCdNm || '기타',
+        tel: item.telno || '',
+        doctors: item.drTotCnt ? parseInt(item.drTotCnt, 10) : null,
+        estbDd,
+        address: item.addr || '주소 정보 없음',
+      };
+    });
 
     return NextResponse.json({
       data: formattedData,

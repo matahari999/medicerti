@@ -3,7 +3,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { formatDate } from '@/lib/utils';
 import {
   Database,
   Search,
@@ -20,8 +19,9 @@ interface HospitalCodeItem {
   name: string;
   type: string;
   address: string;
-  beds: number;
-  status: string;
+  tel: string;
+  estbDd: string;
+  doctors: number | null;
 }
 
 const SOURCE_META = {
@@ -158,7 +158,7 @@ export default function CodesLookup({ basePath }: { basePath: string }) {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="기관명, 코드, 지역으로 검색..."
+            placeholder="기관명 또는 지역으로 검색..."
             className="flex-1 text-sm outline-none placeholder-slate-400 bg-transparent text-slate-700"
           />
         </div>
@@ -209,27 +209,25 @@ export default function CodesLookup({ basePath }: { basePath: string }) {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>기관 코드</th>
                   <th>기관명</th>
                   <th>종별</th>
+                  <th>전화번호</th>
+                  <th>의사 수</th>
+                  <th>개설일</th>
                   <th>소재지</th>
-                  <th>병상수</th>
-                  <th>상태</th>
                 </tr>
               </thead>
               <tbody>
                 {data.map((h) => (
                   <tr key={h.code}>
-                    <td className="font-mono text-xs text-slate-600">{h.code}</td>
                     <td className="font-medium text-slate-800">{h.name}</td>
                     <td>
                       <span className="badge badge-info text-xs">{h.type}</span>
                     </td>
+                    <td className="text-slate-600 text-sm">{h.tel || '-'}</td>
+                    <td className="text-slate-700 text-sm">{h.doctors != null ? `${h.doctors}명` : '-'}</td>
+                    <td className="text-slate-600 text-sm">{h.estbDd || '-'}</td>
                     <td className="text-slate-600 text-sm">{h.address}</td>
-                    <td className="text-slate-700 text-sm">{h.beds}병상</td>
-                    <td>
-                      <span className="badge badge-success text-xs">{h.status}</span>
-                    </td>
                   </tr>
                 ))}
               </tbody>

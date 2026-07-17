@@ -28,7 +28,7 @@ const typeLabels: Record<string, string> = {
 };
 
 const typeDescriptions: Record<string, string> = {
-  details: '건강보험심사평가원(HIRA)의 전국 병원 데이터베이스를 조회하여, 병상 규모, 전화번호, 의료진 인력 등의 상세 정보를 확인합니다.',
+  details: '건강보험심사평가원(HIRA)의 전국 병원 데이터베이스를 조회하여, 종별·전화번호·의사 인력·개설일 등의 상세 정보를 확인합니다.',
   'cert-status': '의료기관평가인증원의 공인 심사를 거쳐 정식 의료기관 인증을 획득한 전국 급성기(종합병원급 이상) 의료기관의 유효 인증서 상태입니다. 급성기 인증현황만 제공되어, 요양병원·정신병원 인증현황은 이 화면에서 조회되지 않습니다.',
   drg: '백내장, 편도선, 충수돌기(맹장) 등 보건복지부가 지정한 7대 질병군 포괄수가제(DRG)가 적용되는 의료기관과 수가 정보입니다.',
   'medical-resource': '시/도 지방자치단체별 인구 대비 확보된 의료진 수 및 병상 비율 등의 공공 자원 불균형 지표 통계입니다.',
@@ -181,10 +181,10 @@ export default function TypeLookup({ basePath, type }: TypeLookupProps) {
                 <thead>
                   <tr>
                     <th className="min-w-[180px]">의료기관명</th>
+                    <th className="w-[100px]">종별</th>
                     <th className="w-[140px]">전화번호</th>
-                    <th className="w-[100px] text-center">병상수</th>
-                    <th className="w-[100px] text-center">의사수</th>
-                    <th className="w-[100px] text-center">간호사수</th>
+                    <th className="w-[100px] text-center">의사 수</th>
+                    <th className="w-[110px]">개설일</th>
                     <th className="min-w-[240px]">소재지 주소</th>
                   </tr>
                 </thead>
@@ -195,10 +195,10 @@ export default function TypeLookup({ basePath, type }: TypeLookupProps) {
                     data.map((item) => (
                       <tr key={item.code}>
                         <td className="font-bold text-slate-800 text-sm flex items-center gap-1.5"><Building2 size={13} className="text-slate-400" />{item.name}</td>
-                        <td className="text-xs text-slate-600"><span className="flex items-center gap-1"><Phone size={11} className="text-slate-400" />{item.tel}</span></td>
-                        <td className="text-center font-semibold text-slate-700">{item.beds}개</td>
-                        <td className="text-center text-slate-600">{item.doctors}명</td>
-                        <td className="text-center text-slate-600">{item.nurses}명</td>
+                        <td className="text-xs"><span className="badge badge-info text-xs">{item.type}</span></td>
+                        <td className="text-xs text-slate-600"><span className="flex items-center gap-1"><Phone size={11} className="text-slate-400" />{item.tel || '-'}</span></td>
+                        <td className="text-center text-slate-600">{item.doctors != null ? `${item.doctors}명` : '-'}</td>
+                        <td className="text-xs text-slate-500">{item.estbDd || '-'}</td>
                         <td className="text-xs text-slate-500"><span className="flex items-center gap-1"><MapPin size={11} className="text-slate-400" />{item.address}</span></td>
                       </tr>
                     ))
