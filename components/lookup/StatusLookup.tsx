@@ -101,7 +101,8 @@ export default function StatusLookup({ basePath }: { basePath: string }) {
             의료기관 개폐업 현황
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            전국 의료기관의 개업, 폐업 및 휴업 실시간 변동 현황을 제공합니다.
+            심평원이 공개하는 전국 병·의원의 최근 개업·휴업·폐업 변동 내역입니다.
+            의원·한의원·치과의원 비중이 크며, 요양·정신병원 등 병원급 개폐업은 건수가 적습니다.
           </p>
         </div>
         <button
@@ -185,9 +186,9 @@ export default function StatusLookup({ basePath }: { basePath: string }) {
             className="text-sm border border-slate-200 rounded px-2 py-1.5 bg-white text-slate-600 focus:outline-none flex-1 sm:flex-initial"
           >
             <option value="">전체 상태</option>
-            <option value="운영중">운영중</option>
-            <option value="폐업">폐업</option>
+            <option value="개업">개업</option>
             <option value="휴업">휴업</option>
+            <option value="폐업">폐업</option>
           </select>
         </div>
       </div>
@@ -229,9 +230,9 @@ export default function StatusLookup({ basePath }: { basePath: string }) {
                   <th>기관명</th>
                   <th>종별</th>
                   <th>소재지</th>
-                  <th>개업일</th>
-                  <th>폐업/휴업 관련일</th>
-                  <th>상태</th>
+                  <th>개설일</th>
+                  <th>폐업/휴업 시기</th>
+                  <th>변동 유형</th>
                 </tr>
               </thead>
               <tbody>
@@ -248,15 +249,13 @@ export default function StatusLookup({ basePath }: { basePath: string }) {
                         <span className="text-red-600 font-bold">{h.closeDate} (폐업)</span>
                       )}
                       {h.status === '휴업' && (
-                        <span className="text-amber-600 font-bold">
-                          {h.pauseStart} ~ {h.pauseEnd} (휴업)
-                        </span>
+                        <span className="text-amber-600 font-bold">{h.pauseStart} (휴업)</span>
                       )}
-                      {h.status === '운영중' && <span className="text-slate-400">—</span>}
+                      {h.status === '개업' && <span className="text-slate-400">—</span>}
                     </td>
                     <td>
-                      {h.status === '운영중' && (
-                        <span className="badge badge-success text-xs">운영중</span>
+                      {h.status === '개업' && (
+                        <span className="badge badge-success text-xs">개업</span>
                       )}
                       {h.status === '폐업' && (
                         <span className="badge badge-urgent text-xs">폐업</span>
