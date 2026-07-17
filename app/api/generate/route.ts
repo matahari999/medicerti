@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { retrieveRelevantChunks, formatRagContext } from '@/lib/rag';
 import { GEMINI_MODEL } from '@/lib/constants';
 import { findReferenceRegulations, findReferenceRegulationsForChapter, buildReferenceContext, findCurrentStandardItem, findCurrentChapter, getLinkedForms, REGULATION_FORMAT_GUIDE } from '@/lib/regulationTemplate';
-import { generateCustomFormHtml } from '@/lib/formGenerator';
+import { generateCustomFormHtml, generateRegulationHtml } from '@/lib/formGenerator';
 import type { StandardItem } from '@/lib/types';
 
 // AI가 만든 서식 본문 HTML 정제: 코드펜스 제거 + 스크립트/이벤트 핸들러 차단
@@ -104,7 +104,7 @@ function getMockResponse(hospitalType: string, hospitalName: string, documentTyp
 
 export async function POST(request: Request) {
   try {
-    const { hospitalType, hospitalName, documentType, documentTitle, additionalContext } = await request.json();
+    const { hospitalType, hospitalName, documentType, documentTitle, additionalContext, logoUrl } = await request.json();
 
     if (!hospitalName || !documentTitle) {
       return NextResponse.json({ error: '필수 필드가 누락되었습니다.' }, { status: 400 });
@@ -269,6 +269,7 @@ ${FORM_FORMAT_GUIDE}${referenceContext}`
         formHtml = generateCustomFormHtml({
           title: documentTitle,
           hospitalName,
+          logoUrl: typeof logoUrl === 'string' && logoUrl.length < 400000 ? logoUrl : undefined,
           related: matchedChapter
             ? `인증기준 ${matchedChapter.chapterNumber}장 ${matchedChapter.chapterTitle}`
             : currentStd
@@ -282,6 +283,23 @@ ${FORM_FORMAT_GUIDE}${referenceContext}`
       }
     }
 
+    // 규정집/지침서: 마크다운 초안을 병원 로고·결재란이 포함된 인쇄용 HTML로도 제공
+    let regulationHtml: string | null = null;
+    if (isRegulationLike && resultText.trim()) {
+      regulationHtml = generateRegulationHtml({
+        title: documentTitle,
+        hospitalName,
+        logoUrl: typeof logoUrl === 'string' && logoUrl.length < 400000 ? logoUrl : undefined,
+        related: matchedChapter
+          ? `인증기준 ${matchedChapter.chapterNumber}장 ${matchedChapter.chapterTitle}`
+          : currentStd
+            ? `인증기준 ${(currentStd as StandardItem).itemNumber} ${(currentStd as StandardItem).itemTitle}`
+            : '의료기관 인증기준',
+        target: additionalContext?.includes('부서') ? '해당 부서' : '전 부서',
+        markdown: resultText,
+      });
+    }
+
     const currentStandard = matchedChapter
       ? { number: `${matchedChapter.chapterNumber}장`, title: `${matchedChapter.chapterTitle} (기준 ${matchedChapter.items.length}개 전체)` }
       : currentStd
@@ -292,6 +310,7 @@ ${FORM_FORMAT_GUIDE}${referenceContext}`
       result: resultText,
       isMock: false,
       formHtml,
+      regulationHtml,
       linkedForms,
       currentStandard,
     });

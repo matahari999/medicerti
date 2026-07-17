@@ -21,15 +21,28 @@ interface HeaderArgs {
   date: string;
   related: string;
   target: string;
+  hospitalName?: string; // 로고 칸에 표시할 병원명(로고 없을 때). 미지정 시 기본 브랜딩
+  logoUrl?: string;      // 병원 로고 이미지(data URL 또는 https URL). 있으면 로고 칸에 이미지로 표시
+}
+
+// 로고 칸 내용: 로고 이미지 > 병원명 텍스트 > 기본 브랜딩(메디인증) 순
+function logoCellContent(hospitalName?: string, logoUrl?: string): string {
+  if (logoUrl) {
+    return `<img class="logo-img" src="${esc(logoUrl)}" alt="${esc(hospitalName || '병원 로고')}">`;
+  }
+  if (hospitalName && hospitalName.trim()) {
+    return `<span class="logo-name">${esc(hospitalName)}</span>`;
+  }
+  return '메디인증<br>MEDICERTI';
 }
 
 // NOTE: header()는 반드시 footer()와 쌍으로 사용해야 함 — form-wrap div를 header에서 열고 footer에서 닫음
-function header({ title, formNo, version, date, related, target }: HeaderArgs) {
+function header({ title, formNo, version, date, related, target, hospitalName, logoUrl }: HeaderArgs) {
   return `
 <div class="form-wrap">
 <table class="header-tbl">
   <tr>
-    <td class="logo-cell" rowspan="3">메디인증<br>MEDICERTI</td>
+    <td class="logo-cell" rowspan="3">${logoCellContent(hospitalName, logoUrl)}</td>
     <td class="title-cell" rowspan="3"><span class="main-title">${esc(title)}</span></td>
     <td class="meta-label">문서번호</td><td class="meta-val">${esc(formNo)}</td>
   </tr>
@@ -67,7 +80,9 @@ body{font-family:'맑은 고딕','나눔고딕',Arial,sans-serif;font-size:9pt;c
 /* ── 헤더 테이블 ── */
 .header-tbl{width:100%;border-collapse:collapse;border:2px solid #000;}
 .header-tbl td{border:1px solid #000;padding:4px 7px;vertical-align:middle;}
-.logo-cell{width:90px;text-align:center;font-weight:700;font-size:9.5pt;background:#1f3864;color:#fff;border-right:2px solid #000;}
+.logo-cell{width:90px;text-align:center;font-weight:700;font-size:9.5pt;background:#1f3864;color:#fff;border-right:2px solid #000;padding:3px;}
+.logo-cell .logo-img{max-width:84px;max-height:52px;width:auto;height:auto;object-fit:contain;display:block;margin:0 auto;background:#fff;border-radius:3px;padding:2px;}
+.logo-cell .logo-name{display:inline-block;font-size:9pt;font-weight:700;line-height:1.25;word-break:keep-all;}
 .title-cell{text-align:center;vertical-align:middle;}
 .main-title{font-size:13pt;font-weight:700;}
 .meta-label{width:65px;background:#dce6f1;font-weight:600;font-size:8pt;text-align:center;}
@@ -113,6 +128,17 @@ table.data tr.tall td{height:40px;}
 .datefill:hover{background:#fff9d6;}
 .datefill:focus{background:#fff3b0;box-shadow:inset 0 0 0 1px #d4a600;}
 .datefill:empty::before{content:'YYYY. MM. DD';color:#bbb;font-size:7.5pt;font-style:italic;}
+
+/* ── 규정집(산문) 본문 ── */
+.reg-body{margin-top:10px;font-size:10pt;line-height:1.7;color:#111;}
+.reg-body .reg-h1{font-size:14pt;font-weight:700;margin:14px 0 8px;padding-bottom:4px;border-bottom:2px solid #1f3864;color:#1f3864;}
+.reg-body .reg-h2{font-size:12pt;font-weight:700;margin:12px 0 6px;color:#1f3864;}
+.reg-body .reg-h3{font-size:10.5pt;font-weight:700;margin:10px 0 4px;}
+.reg-body .reg-p{margin:5px 0;}
+.reg-body .reg-ul,.reg-body .reg-ol{margin:5px 0 5px 22px;}
+.reg-body .reg-ul li,.reg-body .reg-ol li{margin:2px 0;}
+.reg-body hr{border:none;border-top:1px dashed #bbb;margin:8px 0;}
+.reg-body table.data{margin:8px 0;}
 
 /* ── 푸터 ── */
 .form-footer{margin-top:8px;border-top:1px solid #888;padding-top:5px;font-size:7pt;color:#666;display:flex;justify-content:space-between;}
@@ -1074,6 +1100,7 @@ export function generateCustomFormHtml(opts: {
   related: string; // 관련 인증기준·법적 근거 (헤더 표기용)
   target: string;  // 적용 부서/대상
   bodyHtml: string;
+  logoUrl?: string; // 병원 로고(data URL 또는 https). 있으면 헤더 로고 칸에 표시
 }): string {
   const formNo = `${opts.hospitalName.slice(0, 2).toUpperCase() || 'MED'}-FORM-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}`;
   return `<!DOCTYPE html>
@@ -1092,8 +1119,147 @@ ${header({
   date: new Date().toISOString().slice(0, 10),
   related: opts.related,
   target: opts.target,
+  hospitalName: opts.hospitalName,
+  logoUrl: opts.logoUrl,
 })}
 ${opts.bodyHtml}
+${footer(`${opts.hospitalName} (지능형 초안 — 실무 검토 후 사용)`)}
+<script>
+  ${FILLABLE_SCRIPT}
+  const btn = document.createElement('button');
+  btn.textContent = '🖨 인쇄 / PDF 저장';
+  btn.style.cssText = 'position:fixed;top:10px;right:10px;padding:8px 16px;background:#1f3864;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;z-index:9999;';
+  btn.onclick = () => window.print();
+  window.addEventListener('beforeprint', () => btn.style.display = 'none');
+  window.addEventListener('afterprint', () => btn.style.display = '');
+  document.body.appendChild(btn);
+</script>
+</body>
+</html>`;
+}
+
+// ── 규정집(마크다운 산문)을 로고·결재란 헤더가 있는 인쇄용 HTML로 변환 ──
+function mdInline(s: string): string {
+  return esc(s)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`(.+?)`/g, '<code>$1</code>');
+}
+
+function renderMdTable(lines: string[]): string {
+  const rows: string[][] = [];
+  for (const l of lines) {
+    const t = l.trim();
+    if (/^[\s|:\-]+$/.test(t)) continue; // 구분선 행(|---|) 건너뜀
+    const cells = t.replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim());
+    rows.push(cells);
+  }
+  if (rows.length === 0) return '';
+  const [head, ...rest] = rows;
+  const thead = `<tr>${head.map((c) => `<th>${mdInline(c)}</th>`).join('')}</tr>`;
+  const tbody = rest.map((r) => `<tr class="data-r">${r.map((c) => `<td>${mdInline(c)}</td>`).join('')}</tr>`).join('');
+  return `<table class="data">${thead}${tbody}</table>`;
+}
+
+// 규정집 AI 출력(마크다운)의 주요 구성(제목/목록/표/문단)을 HTML로 변환한다.
+function markdownToHtml(md: string): string {
+  const lines = md.replace(/\r\n/g, '\n').split('\n');
+  const out: string[] = [];
+  let listType: 'ul' | 'ol' | null = null;
+  const closeList = () => {
+    if (listType) {
+      out.push(`</${listType}>`);
+      listType = null;
+    }
+  };
+  let i = 0;
+  while (i < lines.length) {
+    const t = lines[i].trim();
+    if (t.startsWith('|')) {
+      closeList();
+      const tbl: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith('|')) {
+        tbl.push(lines[i]);
+        i++;
+      }
+      out.push(renderMdTable(tbl));
+      continue;
+    }
+    if (t === '') {
+      closeList();
+      i++;
+      continue;
+    }
+    if (/^#{1,6}\s/.test(t)) {
+      closeList();
+      const level = Math.min(t.match(/^#+/)![0].length, 3);
+      out.push(`<h${level} class="reg-h${level}">${mdInline(t.replace(/^#+\s/, ''))}</h${level}>`);
+      i++;
+      continue;
+    }
+    if (/^(-|\*)\s/.test(t)) {
+      if (listType !== 'ul') {
+        closeList();
+        out.push('<ul class="reg-ul">');
+        listType = 'ul';
+      }
+      out.push(`<li>${mdInline(t.replace(/^(-|\*)\s/, ''))}</li>`);
+      i++;
+      continue;
+    }
+    if (/^\d+\.\s/.test(t)) {
+      if (listType !== 'ol') {
+        closeList();
+        out.push('<ol class="reg-ol">');
+        listType = 'ol';
+      }
+      out.push(`<li>${mdInline(t.replace(/^\d+\.\s/, ''))}</li>`);
+      i++;
+      continue;
+    }
+    if (/^---+$/.test(t)) {
+      closeList();
+      out.push('<hr>');
+      i++;
+      continue;
+    }
+    closeList();
+    out.push(`<p class="reg-p">${mdInline(t)}</p>`);
+    i++;
+  }
+  closeList();
+  return out.join('\n');
+}
+
+// 규정집/지침서(마크다운)를 병원 로고·결재란이 포함된 인쇄용 HTML 문서로 완성한다.
+export function generateRegulationHtml(opts: {
+  title: string;
+  hospitalName: string;
+  related: string;
+  target: string;
+  markdown: string;
+  logoUrl?: string;
+}): string {
+  const formNo = `${opts.hospitalName.slice(0, 2).toUpperCase() || 'MED'}-REG-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}`;
+  return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(opts.title)}</title>
+${CSS}
+</head>
+<body>
+${header({
+  title: opts.title,
+  formNo,
+  version: 'Rev.1',
+  date: new Date().toISOString().slice(0, 10),
+  related: opts.related,
+  target: opts.target,
+  hospitalName: opts.hospitalName,
+  logoUrl: opts.logoUrl,
+})}
+<div class="reg-body">${markdownToHtml(opts.markdown)}</div>
 ${footer(`${opts.hospitalName} (지능형 초안 — 실무 검토 후 사용)`)}
 <script>
   ${FILLABLE_SCRIPT}

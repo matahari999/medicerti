@@ -41,6 +41,7 @@ export interface InspectionScheduleConfig {
   skipWeekend: boolean;
   skipHoliday: boolean;
   customItems?: ChecklistItem[];
+  logoUrl?: string; // 병원 로고(data URL 또는 https). 헤더 로고 칸에 표시
 }
 
 export interface InspectionDate {
@@ -290,6 +291,7 @@ export function buildInspectionFormHtml(config: InspectionScheduleConfig): {
     related,
     target: field,
     bodyHtml,
+    logoUrl: config.logoUrl,
   });
   return { html, dates };
 }

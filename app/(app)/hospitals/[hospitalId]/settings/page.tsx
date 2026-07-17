@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { HospitalForm } from '@/components/hospital/HospitalForm'
+import { HospitalLogoUploader } from '@/components/hospital/HospitalLogoUploader'
 import { MembersTable } from '@/components/hospital/MembersTable'
 import { getHospital, getHospitalMembers } from '@/lib/services/hospital.service'
 import { requireHospitalMember } from '@/lib/auth'
@@ -39,6 +40,17 @@ export default async function HospitalSettingsPage({ params }: Props) {
         <h1 className="text-2xl font-bold text-gray-900">병원 설정</h1>
         <p className="text-sm text-muted-foreground mt-1">병원 정보 수정 및 팀 관리</p>
       </div>
+
+      {/* 병원 로고 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">병원 로고</CardTitle>
+          <CardDescription>인쇄 서식·규정집·점검표 상단에 병원 로고가 표시됩니다</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <HospitalLogoUploader hospitalId={hospitalId} initialLogoUrl={hospital.logo_url} />
+        </CardContent>
+      </Card>
 
       {/* 병원 정보 수정 */}
       <Card>

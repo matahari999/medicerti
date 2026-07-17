@@ -15,6 +15,8 @@ export const hospitalSchema = z.object({
   special_units:        z.array(z.string()).default([]),
   staff_composition:    z.record(z.string(), z.coerce.number().int().nonnegative()).default({}),
   operating_hours:      z.record(z.string(), z.string()).default({}),
+  // 병원 로고: 리사이즈된 이미지 data URL(또는 https URL). 인쇄 서식·규정집 헤더에 표시.
+  logo_url:             z.string().max(400000, '로고 이미지가 너무 큽니다').optional().nullable(),
 })
 
 export const inviteMemberSchema = z.object({

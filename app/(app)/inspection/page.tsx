@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CalendarCheck, Printer, ListChecks, AlertCircle } from 'lucide-react';
 import {
   CHECKLIST_TEMPLATES,
@@ -30,9 +30,18 @@ function parseCustomItems(raw: string): ChecklistItem[] {
     });
 }
 
+interface HospitalOption {
+  id: string;
+  name: string;
+  logo_url: string | null;
+}
+
 export default function InspectionPage() {
   const [templateId, setTemplateId] = useState<string>('fire');
   const [title, setTitle] = useState<string>('소방 안전 점검표');
+  const [hospitals, setHospitals] = useState<HospitalOption[]>([]);
+  const [hospitalId, setHospitalId] = useState<string>('');
+  const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
   const [hospitalName, setHospitalName] = useState<string>('');
   const [inspectorName, setInspectorName] = useState<string>('');
   const [startDate, setStartDate] = useState<string>(firstOfThisMonth());
@@ -41,6 +50,31 @@ export default function InspectionPage() {
   const [skipWeekend, setSkipWeekend] = useState<boolean>(true);
   const [skipHoliday, setSkipHoliday] = useState<boolean>(true);
   const [customRaw, setCustomRaw] = useState<string>('');
+
+  useEffect(() => {
+    fetch('/api/hospitals')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        const list: HospitalOption[] = (j?.data ?? []).map((h: { id: string; name: string; logo_url: string | null }) => ({
+          id: h.id,
+          name: h.name,
+          logo_url: h.logo_url,
+        }));
+        setHospitals(list);
+      })
+      .catch(() => {});
+  }, []);
+
+  function selectHospital(id: string) {
+    setHospitalId(id);
+    const h = hospitals.find((x) => x.id === id);
+    if (h) {
+      setHospitalName(h.name);
+      setLogoUrl(h.logo_url ?? undefined);
+    } else {
+      setLogoUrl(undefined);
+    }
+  }
 
   function applyTemplate(id: string) {
     setTemplateId(id);
@@ -65,8 +99,9 @@ export default function InspectionPage() {
       skipWeekend,
       skipHoliday,
       customItems: templateId === 'custom' ? parseCustomItems(customRaw) : undefined,
+      logoUrl,
     }),
-    [templateId, title, hospitalName, inspectorName, startDate, months, frequency, skipWeekend, skipHoliday, customRaw]
+    [templateId, title, hospitalName, inspectorName, startDate, months, frequency, skipWeekend, skipHoliday, customRaw, logoUrl]
   );
 
   const dates = useMemo(() => {
@@ -162,6 +197,36 @@ export default function InspectionPage() {
                 placeholder={'소방 안전 | 소화기 압력계 정상 여부\n전기 안전 | 누전차단기 작동 여부\n비상구 장애물 유무'}
                 className={inputCls + ' font-mono text-xs leading-relaxed'}
               />
+            </div>
+          )}
+
+          {hospitals.length > 0 && (
+            <div>
+              <label className={labelCls}>병원 선택 (이름·로고 자동 적용)</label>
+              <div className="flex items-center gap-3">
+                <select value={hospitalId} onChange={(e) => selectHospital(e.target.value)} className={inputCls}>
+                  <option value="">직접 입력</option>
+                  {hospitals.map((h) => (
+                    <option key={h.id} value={h.id}>
+                      {h.name}
+                      {h.logo_url ? ' (로고 있음)' : ''}
+                    </option>
+                  ))}
+                </select>
+                {logoUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={logoUrl}
+                    alt="병원 로고"
+                    className="h-10 w-16 object-contain rounded border border-gray-200 bg-white shrink-0"
+                  />
+                )}
+              </div>
+              {hospitalId && !logoUrl && (
+                <p className="text-[11px] text-amber-600 mt-1">
+                  이 병원은 로고가 없습니다. 병원 설정 &gt; 병원 로고에서 업로드하면 서식에 표시됩니다.
+                </p>
+              )}
             </div>
           )}
 

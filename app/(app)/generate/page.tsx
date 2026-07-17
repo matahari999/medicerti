@@ -68,6 +68,7 @@ function GenerateForm({
     documentType: DocumentType;
     documentTitle: string;
     additionalContext: string;
+    logoUrl?: string;
   }) => void;
   isGenerating: boolean;
 }) {
@@ -76,11 +77,32 @@ function GenerateForm({
   const [documentType, setDocumentType] = useState<DocumentType>('regulation');
   const [documentTitle, setDocumentTitle] = useState('');
   const [additionalContext, setAdditionalContext] = useState('');
+  const [hospitals, setHospitals] = useState<{ id: string; name: string; logo_url: string | null }[]>([]);
+  const [hospitalId, setHospitalId] = useState('');
+  const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    fetch('/api/hospitals')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => setHospitals((j?.data ?? []).map((h: { id: string; name: string; logo_url: string | null }) => ({ id: h.id, name: h.name, logo_url: h.logo_url }))))
+      .catch(() => {});
+  }, []);
+
+  const selectHospital = (id: string) => {
+    setHospitalId(id);
+    const h = hospitals.find((x) => x.id === id);
+    if (h) {
+      setHospitalName(h.name);
+      setLogoUrl(h.logo_url ?? undefined);
+    } else {
+      setLogoUrl(undefined);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!hospitalName.trim() || !documentTitle.trim()) return;
-    onGenerate({ hospitalType, hospitalName, documentType, documentTitle, additionalContext });
+    onGenerate({ hospitalType, hospitalName, documentType, documentTitle, additionalContext, logoUrl });
   };
 
   return (
@@ -88,6 +110,31 @@ function GenerateForm({
       <h2 className="font-bold text-slate-800">병원 정보 입력</h2>
 
       <DraftDisclaimer />
+
+      {/* 병원 선택 (이름·로고 자동) */}
+      {hospitals.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">병원 선택 (이름·로고 자동 적용)</label>
+          <div className="flex items-center gap-3">
+            <select
+              value={hospitalId}
+              onChange={(e) => selectHospital(e.target.value)}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">직접 입력</option>
+              {hospitals.map((h) => (
+                <option key={h.id} value={h.id}>
+                  {h.name}{h.logo_url ? ' (로고 있음)' : ''}
+                </option>
+              ))}
+            </select>
+            {logoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt="병원 로고" className="h-10 w-16 object-contain rounded border border-slate-200 bg-white shrink-0" />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 병원 유형 */}
       <div>
@@ -263,7 +310,8 @@ export default function GeneratePage() {
   const [currentStandard, setCurrentStandard] = useState<{ number: string; title: string } | null>(null);
   // 서식류 생성 시 인쇄용 HTML (결재란·문서번호 포함)
   const [formHtml, setFormHtml] = useState<string | null>(null);
-  
+  const [regulationHtml, setRegulationHtml] = useState<string | null>(null);
+
   // 편집기 모드 상태
   const [isEditing, setIsEditing] = useState(false);
   const [editorContent, setEditorContent] = useState('');
@@ -304,6 +352,7 @@ export default function GeneratePage() {
     documentType: DocumentType;
     documentTitle: string;
     additionalContext: string;
+    logoUrl?: string;
   }) => {
     setIsGenerating(true);
     setResult(null);
@@ -340,7 +389,8 @@ export default function GeneratePage() {
         setCurrentStandard(resJson.currentStandard || null);
       }
       setFormHtml(resJson.formHtml || null);
-      
+      setRegulationHtml(resJson.regulationHtml || null);
+
       // 편집용 상태도 미리 설정
       setEditorContent(resJson.result);
       setEditedTitle(data.documentTitle);
@@ -468,6 +518,20 @@ export default function GeneratePage() {
                         className="flex items-center gap-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg px-3 py-2 cursor-pointer shadow-sm"
                       >
                         🖨 서식 인쇄/PDF
+                      </button>
+                    )}
+                    {regulationHtml && (
+                      <button
+                        onClick={() => {
+                          const w = window.open('', '_blank');
+                          if (w) {
+                            w.document.write(regulationHtml);
+                            w.document.close();
+                          }
+                        }}
+                        className="flex items-center gap-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg px-3 py-2 cursor-pointer shadow-sm"
+                      >
+                        🖨 규정집 인쇄/PDF (로고 포함)
                       </button>
                     )}
                     {/* 편집기 연동 핵심 액션 버튼 */}
