@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, LayoutDashboard, Building2, BarChart3, CalendarDays, Bell, BookOpen, Settings } from 'lucide-react'
+import { Menu, X, LayoutDashboard, Building2, BarChart3, CalendarDays, Bell, BookOpen, Settings, CalendarCheck } from 'lucide-react'
 import MediLogo from '@/components/MediLogo'
 import { cn } from '@/lib/utils'
 
@@ -11,6 +11,7 @@ const mobileNav = [
   { href: '/dashboard',     label: '대시보드',   icon: LayoutDashboard },
   { href: '/hospitals',     label: '병원 관리',   icon: Building2 },
   { href: '/compare',       label: '병원간 비교',  icon: BarChart3 },
+  { href: '/inspection',    label: '점검표 생성',  icon: CalendarCheck },
   { href: '/schedule',      label: '일정 캘린더',  icon: CalendarDays },
   { href: '/standards',     label: '인증기준집',   icon: BookOpen },
   { href: '/notifications', label: '알림',        icon: Bell },

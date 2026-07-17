@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { LayoutDashboard, Building2, Settings, Shield, Sparkles, BookOpen, GraduationCap, MessageCircle, BarChart3, FileText, Bell, CalendarDays, FolderOpen } from 'lucide-react'
+import { LayoutDashboard, Building2, Settings, Shield, Sparkles, BookOpen, GraduationCap, MessageCircle, BarChart3, FileText, Bell, CalendarDays, FolderOpen, CalendarCheck } from 'lucide-react'
 import MediLogo from '@/components/MediLogo'
 import { NavItem } from './NavItem'
 import { UserMenu } from './UserMenu'
@@ -17,6 +17,7 @@ const navGroups = [
     label: '인증 준비',
     items: [
       { href: '/generate',   label: '문서 생성',  icon: <Sparkles className="w-4 h-4 shrink-0" /> },
+      { href: '/inspection', label: '점검표 생성', icon: <CalendarCheck className="w-4 h-4 shrink-0" /> },
       { href: '/standards',  label: '인증기준집', icon: <BookOpen className="w-4 h-4 shrink-0" /> },
       { href: '/resources',  label: '인증 자료실', icon: <FolderOpen className="w-4 h-4 shrink-0" /> },
       { href: '/education',  label: '교육 관리',  icon: <GraduationCap className="w-4 h-4 shrink-0" /> },

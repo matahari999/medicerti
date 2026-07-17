@@ -103,6 +103,11 @@ table.data tr.tall td{height:40px;}
 [contenteditable="true"]:empty::before{content:'클릭하여 입력';color:#bbb;font-size:7.5pt;font-style:italic;}
 .sign-box[contenteditable="true"]{display:flex;align-items:center;justify-content:center;font-size:9pt;font-weight:600;}
 
+/* ── 클릭 가능한 체크박스(☐/☑) ── */
+.chk{cursor:pointer;user-select:none;display:inline-block;min-width:1.05em;text-align:center;border-radius:3px;line-height:1;}
+.chk:hover{background:#d4e4ff;box-shadow:inset 0 0 0 1px #6aa3ff;}
+.chk.on{color:#0b5; font-weight:700;}
+
 /* ── 푸터 ── */
 .form-footer{margin-top:8px;border-top:1px solid #888;padding-top:5px;font-size:7pt;color:#666;display:flex;justify-content:space-between;}
 
@@ -110,14 +115,58 @@ table.data tr.tall td{height:40px;}
   body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   [contenteditable="true"]{background:none !important;box-shadow:none !important;}
   [contenteditable="true"]:empty::before{content:none !important;}
+  .chk:hover{background:none !important;box-shadow:none !important;}
 }
 </style>`;
+
+// 서식 본문의 모든 체크박스 문자(☐/☑)를 클릭 가능한 토글로 바꾸는 스크립트.
+// 텍스트 안에 흩어져 있는 ☐/☑ 를 각각 <span class="chk"> 로 감싼 뒤 클릭하면
+// ☐↔☑ 로 토글되게 한다. 인쇄 시에는 현재 상태(체크 여부)가 그대로 찍힌다.
+// 서식마다 손댈 필요 없이 렌더링된 최종 DOM에서 일괄 처리하므로 전체 점검표/서식에 적용된다.
+export const CHECKBOX_SCRIPT = `
+  (function(){
+    var EMPTY='\\u2610', CHECK='\\u2611';
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+    var targets = [];
+    while (walker.nextNode()) {
+      var node = walker.currentNode;
+      var pe = node.parentElement;
+      if (!pe) continue;
+      if (pe.closest('script,style')) continue;         // 스크립트/스타일 텍스트는 제외
+      if (pe.classList.contains('chk')) continue;
+      if (node.nodeValue.indexOf(EMPTY) >= 0 || node.nodeValue.indexOf(CHECK) >= 0) targets.push(node);
+    }
+    targets.forEach(function(node){
+      var parts = node.nodeValue.split(/([\\u2610\\u2611])/);
+      var frag = document.createDocumentFragment();
+      parts.forEach(function(p){
+        if (p === EMPTY || p === CHECK) {
+          var s = document.createElement('span');
+          s.className = 'chk' + (p === CHECK ? ' on' : '');
+          s.textContent = p;
+          frag.appendChild(s);
+        } else if (p) {
+          frag.appendChild(document.createTextNode(p));
+        }
+      });
+      node.parentNode.replaceChild(frag, node);
+    });
+    document.body.addEventListener('click', function(e){
+      var t = e.target;
+      if (t && t.classList && t.classList.contains('chk')) {
+        if (t.textContent === EMPTY) { t.textContent = CHECK; t.classList.add('on'); }
+        else { t.textContent = EMPTY; t.classList.remove('on'); }
+      }
+    });
+  })();
+`;
 
 // 빈 데이터 셀(작성자가 채워야 할 칸)을 화면에서 바로 입력 가능하게 만드는 스크립트.
 // 각 makeXxxTemp() 함수를 개별로 손댈 필요 없이, 렌더링된 최종 DOM에서 "라벨이 없는
 // 빈 칸"만 자동으로 찾아 contenteditable로 전환한다 — 인쇄 시에는 CSS로 입력 스타일만 제거되고
 // 타이핑된 내용은 그대로 인쇄된다.
 const FILLABLE_SCRIPT = `
+  ${CHECKBOX_SCRIPT}
   document.querySelectorAll('table.data td').forEach(function(td){
     if (td.children.length === 0 && td.textContent.trim() === '' && !td.classList.contains('hd')) {
       td.contentEditable = 'true';
@@ -130,7 +179,7 @@ const FILLABLE_SCRIPT = `
     if (box.textContent.trim() === '') box.contentEditable = 'true';
   });
   const hint = document.createElement('div');
-  hint.textContent = '💡 노란 빈 칸을 클릭하면 화면에서 바로 입력할 수 있습니다';
+  hint.textContent = '💡 노란 빈 칸은 클릭해서 입력, ☐ 네모칸은 클릭하면 ☑ 로 체크됩니다';
   hint.style.cssText = 'position:fixed;top:10px;left:10px;padding:6px 12px;background:#fff3b0;color:#5c4a00;border:1px solid #d4a600;border-radius:6px;font-size:12px;z-index:9999;';
   document.body.appendChild(hint);
   window.addEventListener('beforeprint', () => hint.style.display = 'none');
