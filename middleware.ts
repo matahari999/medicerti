@@ -6,11 +6,12 @@ const AUTH_PATHS = ['/login', '/register', '/forgot-password']
 
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
   "font-src 'self'",
+  "frame-src https://www.youtube.com https://www.youtube-nocookie.com",
   "frame-ancestors 'none'",
 ].join('; ')
 

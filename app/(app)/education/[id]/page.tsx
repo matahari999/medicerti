@@ -19,6 +19,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { calcProgressPercent } from '@/lib/utils';
+import YouTubeCoursePlayer from '@/components/education/YouTubeCoursePlayer';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -115,13 +116,24 @@ export default function EducationDetailPage({ params }: Props) {
     }
   };
 
+  const hasVideo = !!course.youtubeId;
+
+  const completeLearning = () => {
+    updateProgress(100);
+    setSuccessMsg('교육 학습이 정상 완료되었습니다. 수료증 발급이 가능합니다! 🎉');
+    setTimeout(() => setSuccessMsg(''), 4000);
+  };
+
   const handleStartLearning = () => {
     setIsPlaying(true);
+
+    // 실제 YouTube 영상이 있으면 시청 종료(onEnded) 시 완료 처리하고, 여기선 재생만 시작.
+    if (hasVideo) return;
+
+    // 영상 미등록 코스는 기존 데모 동작(2.5초 후 완료) 유지.
     setTimeout(() => {
-      updateProgress(100);
-      setSuccessMsg('교육 학습이 정상 완료되었습니다. 수료증 발급이 가능합니다! 🎉');
+      completeLearning();
       setIsPlaying(false);
-      setTimeout(() => setSuccessMsg(''), 4000);
     }, 2500);
   };
 
@@ -171,7 +183,15 @@ export default function EducationDetailPage({ params }: Props) {
 
           <div className="card overflow-hidden">
             <div className="bg-slate-900 aspect-video flex items-center justify-center relative">
-              {isPlaying ? (
+              {isPlaying && hasVideo ? (
+                <YouTubeCoursePlayer
+                  videoId={course.youtubeId as string}
+                  onEnded={() => {
+                    completeLearning();
+                    setIsPlaying(false);
+                  }}
+                />
+              ) : isPlaying ? (
                 <div className="text-white text-center space-y-3 fade-in">
                   <Loader2 className="animate-spin text-blue-500 mx-auto" size={36} />
                   <div className="text-sm text-white/70">동영상 강의 재생 중... (2.5초 후 진도 100% 완료 처리됩니다)</div>

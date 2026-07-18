@@ -69,6 +69,8 @@ export interface EducationCourse {
   isMandatory?: boolean;
   targetJobTypes?: string[];
   hasCertificate?: boolean;
+  /** YouTube 영상 ID (미등록/공개 영상). 예: https://youtu.be/dQw4w9WgXcQ → 'dQw4w9WgXcQ' */
+  youtubeId?: string;
   [key: string]: unknown;
 }
 

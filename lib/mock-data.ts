@@ -19,12 +19,15 @@ export const mockPublicDataMeta = [
   { id: 'statistics', name: '의료기관 통계', source: '보건복지부', updatedAt: '2026-04-30', type: 'statistics' },
 ];
 
+// ⬇️ youtubeId: 만든 동영상을 YouTube에 '미등록(Unlisted)'으로 올린 뒤,
+//    영상 URL(https://youtu.be/XXXXXXXXXXX)의 XXXX 부분(11자리)을 여기에 붙여넣으세요.
+//    비워두면('') 해당 코스는 기존 데모 플레이어로 표시됩니다.
 export const mockEducationCourses: EducationCourse[] = [
-  { id: '1', title: '낙상 예방 교육', category: 'patient_safety', hospitalType: 'nursing', duration: 60, description: '낙상 위험 평가 및 예방 활동', mandatory: true },
-  { id: '2', title: '손위생 교육', category: 'infection_control', hospitalType: 'nursing', duration: 30, description: '올바른 손위생 방법', mandatory: true },
-  { id: '3', title: '화재 대피 훈련', category: 'fire_safety', hospitalType: 'nursing', duration: 90, description: '화재 발생 시 대피 절차', mandatory: true },
-  { id: '4', title: '환자 권리 교육', category: 'human_rights', hospitalType: 'nursing', duration: 45, description: '환자 권리와 의무', mandatory: true },
-  { id: '5', title: '의료기관 인증 이해', category: 'quality', hospitalType: 'nursing', duration: 60, description: '4주기 인증기준 개요', mandatory: false },
+  { id: '1', title: '낙상 예방 교육', category: 'patient_safety', hospitalType: 'nursing', duration: 60, description: '낙상 위험 평가 및 예방 활동', mandatory: true, youtubeId: '5DtQSNZZxWw' },
+  { id: '2', title: '손위생 교육', category: 'infection_control', hospitalType: 'nursing', duration: 30, description: '올바른 손위생 방법', mandatory: true, youtubeId: '' },
+  { id: '3', title: '화재 대피 훈련', category: 'fire_safety', hospitalType: 'nursing', duration: 90, description: '화재 발생 시 대피 절차', mandatory: true, youtubeId: '' },
+  { id: '4', title: '환자 권리 교육', category: 'human_rights', hospitalType: 'nursing', duration: 45, description: '환자 권리와 의무', mandatory: true, youtubeId: '' },
+  { id: '5', title: '의료기관 인증 이해', category: 'quality', hospitalType: 'nursing', duration: 60, description: '4주기 인증기준 개요', mandatory: false, youtubeId: '' },
 ];
 
 export const mockNotices = [
