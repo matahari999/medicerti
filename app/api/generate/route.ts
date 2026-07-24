@@ -194,7 +194,7 @@ export async function POST(request: Request) {
         });
         uploadedRefCount = hits.length;
         if (hits.length > 0) {
-          uploadedRefBlock = `\n\n[등록 자료 원문 근거 — 최우선 근거]\n아래는 이 병원에 등록된 규정집·인증기준집·규정 사례집에서 발췌한 실제 원문이다. 이 원문의 구조·용어·수치·절차를 최우선 근거로 삼아 작성하고, 원문에 없는 내용은 관련 법령 근거가 있을 때만 조문을 명시해 보완하라.\n\n${formatReferenceBlock(hits)}`;
+          uploadedRefBlock = `\n\n[등록 자료 원문 근거 — 최우선 근거]\n이 문서의 주제는 "${itemTitle || documentTitle}"(인증기준 ${itemNumber})이다. 아래는 이 병원에 등록된 규정집·인증기준집·규정 사례집에서 발췌한 실제 원문이다. 이 원문의 구조·용어·수치·절차를 최우선 근거로 삼아 작성하되, 근거 중 이 주제와 무관한 다른 기준의 내용이 섞여 있으면 그 부분은 무시하고 제목·범위를 절대 바꾸지 마라. 원문에 없는 내용은 관련 법령 근거가 있을 때만 조문을 명시해 보완하라.\n\n${formatReferenceBlock(hits)}`;
         }
       } catch (e) {
         console.error('[generate] 근거 검색 실패:', e);
@@ -312,6 +312,12 @@ ${FORM_FORMAT_GUIDE}${uploadedRefBlock}${referenceContext}`
 
     if (!resultText) {
       throw new Error('API 응답 텍스트가 비어 있습니다.');
+    }
+
+    // 카테고리로 특정 기준을 고른 규정집: 근거 원문에 같은 번호의 다른 자료(예: 7.1이 감염관리 vs 질향상)가
+    // 섞여 있으면 모델이 H1 제목을 그쪽으로 바꾸는 일이 있다. 요청한 제목으로 첫 제목 라인을 강제 교정한다.
+    if (isRegulationLike && itemNumber && resultText) {
+      resultText = resultText.replace(/^\s*#\s+.+$/m, `# ${documentTitle}`);
     }
 
     // 서식류: AI 본문 HTML을 결재란·문서번호 헤더가 있는 인쇄용 서식으로 완성
