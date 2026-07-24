@@ -3,7 +3,18 @@ import { retrieveRelevantChunks, formatRagContext } from '@/lib/rag';
 import { GEMINI_MODEL } from '@/lib/constants';
 import { findReferenceRegulations, findReferenceRegulationsForChapter, buildReferenceContext, findCurrentStandardItem, findCurrentChapter, getLinkedForms, REGULATION_FORMAT_GUIDE } from '@/lib/regulationTemplate';
 import { generateCustomFormHtml, generateRegulationHtml } from '@/lib/formGenerator';
-import type { StandardItem } from '@/lib/types';
+import { findReferences, formatReferenceBlock } from '@/lib/referenceSearch';
+import { getCatalog } from '@/lib/standardCatalog';
+import type { StandardItem, HospitalTypeKey } from '@/lib/types';
+
+// /api/generate의 병원유형(카탈로그 키) → reference_chunks.hospital_type(DB 값)
+const REF_HOSPITAL_TYPE: Record<string, string> = {
+  nursing: 'long_term_care',
+  psychiatric: 'psychiatric',
+  rehabilitation: 'rehabilitation',
+  acute: 'acute',
+  dental: 'dental',
+};
 
 // AI가 만든 서식 본문 HTML 정제: 코드펜스 제거 + 스크립트/이벤트 핸들러 차단
 function sanitizeFormBody(raw: string): string {
@@ -104,7 +115,8 @@ function getMockResponse(hospitalType: string, hospitalName: string, documentTyp
 
 export async function POST(request: Request) {
   try {
-    const { hospitalType, hospitalName, documentType, documentTitle, additionalContext, logoUrl } = await request.json();
+    const { hospitalType, hospitalName, documentType, documentTitle, additionalContext, logoUrl,
+      itemNumber, itemTitle, chapterNumber, chapterTitle } = await request.json();
 
     if (!hospitalName || !documentTitle) {
       return NextResponse.json({ error: '필수 필드가 누락되었습니다.' }, { status: 400 });
@@ -146,15 +158,56 @@ export async function POST(request: Request) {
     const currentStd = matchedChapter
       ?? ((isRegulationLike || isFormLike) ? findCurrentStandardItem(hospitalType, documentTitle, referenceRegs) : null);
     const referenceContext = buildReferenceContext(referenceRegs, currentStd);
-    const linkedForms = isRegulationLike ? getLinkedForms(currentStd, referenceRegs) : [];
+    // 카테고리로 특정 기준(itemNumber)을 골랐으면 그 기준을 직접 쓴다(제목 유사도 추측이 틀리는 걸 방지).
+    let catalogItem: StandardItem | null = null;
+    if (itemNumber) {
+      const cat = getCatalog(hospitalType as HospitalTypeKey);
+      for (const ch of cat.chapters) {
+        const found = ch.items.find((it) => it.itemNumber === itemNumber);
+        if (found) { catalogItem = found; break; }
+      }
+    }
+
+    const linkedForms = isRegulationLike
+      ? (catalogItem
+          // 이 기준에 실제로 딸린 서식·점검표만 추천
+          ? [...(catalogItem.requiredForms ?? []), ...(catalogItem.requiredChecklists ?? [])]
+          : getLinkedForms(currentStd, referenceRegs))
+      : [];
     const isFullChapterRequest = matchedChapter !== null;
+
+    // 3-b. 카테고리(기준번호)로 요청된 경우: 업로드한 병원 규정집·인증기준집·규정 사례집 원문에서 근거를 찾아 주입.
+    //      이게 있으면 하드코딩된 2021 합본(referenceContext)보다 실제 등록 자료를 우선 근거로 삼는다.
+    let uploadedRefBlock = '';
+    let uploadedRefCount = 0;
+    const refHospitalType = REF_HOSPITAL_TYPE[hospitalType] ?? '';
+    if (itemNumber && refHospitalType) {
+      try {
+        const { hits } = await findReferences({
+          hospitalType: refHospitalType,
+          regCode: itemNumber,
+          chapterNo: chapterNumber ? Number(chapterNumber) : null,
+          itemTitle: itemTitle || documentTitle,
+          chapterTitle: chapterTitle || undefined,
+          summary: additionalContext || undefined,
+          maxChars: isFormLike ? 12000 : 18000,
+        });
+        uploadedRefCount = hits.length;
+        if (hits.length > 0) {
+          uploadedRefBlock = `\n\n[등록 자료 원문 근거 — 최우선 근거]\n아래는 이 병원에 등록된 규정집·인증기준집·규정 사례집에서 발췌한 실제 원문이다. 이 원문의 구조·용어·수치·절차를 최우선 근거로 삼아 작성하고, 원문에 없는 내용은 관련 법령 근거가 있을 때만 조문을 명시해 보완하라.\n\n${formatReferenceBlock(hits)}`;
+        }
+      } catch (e) {
+        console.error('[generate] 근거 검색 실패:', e);
+      }
+    }
 
     // 4. 시스템/유저 프롬프트 준비
     const systemPrompt = isFormLike
       ? `너는 대한민국 의료기관 인증 실무 서식(법정서식·평가지·점검표·기록지·대장) 설계 전문가이다.
 요청받은 서식 제목에 맞는, 병원 현장에서 바로 인쇄해 쓰는 실무 서식의 본문을 작성하라.
 문서 제목과 병원명은 요청받은 값을 그대로 사용하고, 병원 유형 특성을 반영하라.
-${FORM_FORMAT_GUIDE}${referenceContext}`
+${uploadedRefBlock ? '아래 [등록 자료 원문 근거]에 실제 규정 원문이 있으면, 그 규정이 요구하는 기록·점검 항목을 서식의 행으로 구체적으로 반영하라.' : ''}
+${FORM_FORMAT_GUIDE}${uploadedRefBlock}${referenceContext}`
       : `너는 대한민국 의료기관평가인증 기준 및 병원 규정 수립에 정통한 도메인 전문가이자 시니어 병원 행정 컨설턴트이다.
 병원 정보와 요청받은 문서 제목에 맞는 전문성 있고 규격화된 규정집/지침서/서식 초안을 마크다운 포맷으로 작성하라.
 
@@ -164,7 +217,7 @@ ${FORM_FORMAT_GUIDE}${referenceContext}`
 3. 문서 내에 (작성일), (서명) 등 채워 넣어야 하는 실무 플레이스홀더를 제공하라.
 4. 문서 제목(H1)과 병원명은 요청받은 값을 한 글자도 바꾸지 말고 그대로 사용하라. 참조 자료의 주제가 요청 제목과 다르면 반드시 요청 제목을 따르라.${
       isFullChapterRequest ? '\n5. 이 요청은 장(chapter) 전체 규정집 작성 요청이다. 아래 [현행 인증기준]에 나열된 기준을 하나도 빠짐없이, 각 기준 번호를 소제목으로 삼아 지침 및 절차 섹션에 전부 포함하라. 일부만 다루거나 요약만 하고 끝내지 마라.' : ''}${
-      isRegulationLike ? `\n${REGULATION_FORMAT_GUIDE}` : ''}${referenceContext}${
+      isRegulationLike ? `\n${REGULATION_FORMAT_GUIDE}` : ''}${uploadedRefBlock}${referenceContext}${
       ragContext ? `\n\n[인증기준 참조 — RAG 검색 결과]\n${ragContext}` : ''}`;
 
     const userPrompt = `병원명: ${hospitalName}
@@ -300,11 +353,13 @@ ${FORM_FORMAT_GUIDE}${referenceContext}`
       });
     }
 
-    const currentStandard = matchedChapter
-      ? { number: `${matchedChapter.chapterNumber}장`, title: `${matchedChapter.chapterTitle} (기준 ${matchedChapter.items.length}개 전체)` }
-      : currentStd
-        ? { number: (currentStd as StandardItem).itemNumber, title: (currentStd as StandardItem).itemTitle }
-        : null;
+    const currentStandard = catalogItem
+      ? { number: catalogItem.itemNumber, title: catalogItem.itemTitle }
+      : matchedChapter
+        ? { number: `${matchedChapter.chapterNumber}장`, title: `${matchedChapter.chapterTitle} (기준 ${matchedChapter.items.length}개 전체)` }
+        : currentStd
+          ? { number: (currentStd as StandardItem).itemNumber, title: (currentStd as StandardItem).itemTitle }
+          : null;
 
     return NextResponse.json({
       result: resultText,
@@ -313,6 +368,7 @@ ${FORM_FORMAT_GUIDE}${referenceContext}`
       regulationHtml,
       linkedForms,
       currentStandard,
+      groundedRefs: uploadedRefCount,
     });
   } catch (error: any) {
     console.error('문서 생성 오류:', error.message);

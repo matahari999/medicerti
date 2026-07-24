@@ -57,19 +57,44 @@ function DraftDisclaimer({ variant = 'default' }: { variant?: 'default' | 'resul
   );
 }
 
+// 카탈로그 타입
+interface CatalogItem { itemNumber: string; itemTitle: string; summary: string; }
+interface CatalogFormRef { name: string; itemNumber: string; }
+interface CatalogChapter {
+  chapterNumber: string;
+  chapterTitle: string;
+  items: CatalogItem[];
+  forms: CatalogFormRef[];
+  checklists: CatalogFormRef[];
+}
+
+export interface GenerateInput {
+  hospitalType: HospitalType;
+  hospitalName: string;
+  documentType: DocumentType;
+  documentTitle: string;
+  additionalContext: string;
+  logoUrl?: string;
+  // 카테고리 선택 시 원문 근거 검색에 쓰이는 기준 정보
+  itemNumber?: string;
+  itemTitle?: string;
+  chapterNumber?: string;
+  chapterTitle?: string;
+}
+
+// 문서유형이 규정집류인지 / 점검표인지 / 양식류인지
+function docKind(t: DocumentType): 'regulation' | 'checklist' | 'form' {
+  if (t === 'checklist') return 'checklist';
+  if (t === 'form' || t === 'record') return 'form';
+  return 'regulation'; // regulation/guideline/manual
+}
+
 // 생성 폼
 function GenerateForm({
   onGenerate,
   isGenerating,
 }: {
-  onGenerate: (data: {
-    hospitalType: HospitalType;
-    hospitalName: string;
-    documentType: DocumentType;
-    documentTitle: string;
-    additionalContext: string;
-    logoUrl?: string;
-  }) => void;
+  onGenerate: (data: GenerateInput) => void;
   isGenerating: boolean;
 }) {
   const [hospitalType, setHospitalType] = useState<HospitalType>('nursing');
@@ -81,12 +106,32 @@ function GenerateForm({
   const [hospitalId, setHospitalId] = useState('');
   const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
 
+  // 카테고리 선택 모드
+  const [mode, setMode] = useState<'category' | 'manual'>('category');
+  const [chapters, setChapters] = useState<CatalogChapter[]>([]);
+  const [chapterNumber, setChapterNumber] = useState('');
+  const [selectedRef, setSelectedRef] = useState<GenerateInput | null>(null);
+
   useEffect(() => {
     fetch('/api/hospitals')
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => setHospitals((j?.data ?? []).map((h: { id: string; name: string; logo_url: string | null }) => ({ id: h.id, name: h.name, logo_url: h.logo_url }))))
       .catch(() => {});
   }, []);
+
+  // 병원유형이 바뀌면 카탈로그 다시 로드
+  useEffect(() => {
+    fetch(`/api/catalog?hospitalType=${hospitalType}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        const chs: CatalogChapter[] = j?.chapters ?? [];
+        setChapters(chs);
+        setChapterNumber(chs[0]?.chapterNumber ?? '');
+        setSelectedRef(null);
+        setDocumentTitle('');
+      })
+      .catch(() => setChapters([]));
+  }, [hospitalType]);
 
   const selectHospital = (id: string) => {
     setHospitalId(id);
@@ -99,10 +144,23 @@ function GenerateForm({
     }
   };
 
+  const kind = docKind(documentType);
+  const docTypeLabel = DOCUMENT_TYPE_LABELS[documentType];
+  const chapter = chapters.find((c) => c.chapterNumber === chapterNumber);
+
+  // 카테고리 항목 선택 → 제목·기준정보 세팅
+  const pickItem = (ref: GenerateInput, title: string) => {
+    setSelectedRef(ref);
+    setDocumentTitle(title);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!hospitalName.trim() || !documentTitle.trim()) return;
-    onGenerate({ hospitalType, hospitalName, documentType, documentTitle, additionalContext, logoUrl });
+    const base = { hospitalType, hospitalName, documentType, documentTitle, additionalContext, logoUrl };
+    // 카테고리 모드에서 고른 기준정보(itemNumber 등)를 함께 넘겨 원문 근거를 검색하게 한다.
+    // base를 뒤에 둬서 실제 제목·병원명이 selectedRef의 빈 값에 덮이지 않게 한다.
+    onGenerate(mode === 'category' && selectedRef ? { ...selectedRef, ...base } : base);
   };
 
   return (
@@ -186,20 +244,128 @@ function GenerateForm({
         </select>
       </div>
 
-      {/* 문서 제목 */}
+      {/* 문서 제목 — 카테고리 선택 / 직접 입력 토글 */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">
-          생성할 문서 제목 <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          value={documentTitle}
-          onChange={(e) => setDocumentTitle(e.target.value)}
-          placeholder="예: 감염관리 규정집, 낙상 예방 지침서"
-          className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-          maxLength={100}
-        />
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="block text-sm font-medium text-slate-700">
+            생성할 문서 <span className="text-red-500">*</span>
+          </label>
+          <div className="flex text-xs rounded-lg overflow-hidden border border-slate-200">
+            <button
+              type="button"
+              onClick={() => { setMode('category'); setDocumentTitle(''); setSelectedRef(null); }}
+              className={`px-2.5 py-1 ${mode === 'category' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600'}`}
+            >
+              카테고리 선택
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMode('manual'); setSelectedRef(null); }}
+              className={`px-2.5 py-1 ${mode === 'manual' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600'}`}
+            >
+              직접 입력
+            </button>
+          </div>
+        </div>
+
+        {mode === 'manual' ? (
+          <input
+            type="text"
+            value={documentTitle}
+            onChange={(e) => setDocumentTitle(e.target.value)}
+            placeholder="예: 감염관리 규정집, 낙상 예방 지침서"
+            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+            maxLength={100}
+          />
+        ) : (
+          <div className="space-y-2">
+            {/* 장 선택 */}
+            <select
+              value={chapterNumber}
+              onChange={(e) => { setChapterNumber(e.target.value); setSelectedRef(null); setDocumentTitle(''); }}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {chapters.map((c) => (
+                <option key={c.chapterNumber} value={c.chapterNumber}>제{c.chapterNumber}장 {c.chapterTitle}</option>
+              ))}
+            </select>
+
+            {/* 문서유형에 맞는 카테고리 목록 */}
+            <div className="max-h-52 overflow-y-auto border border-slate-200 rounded-lg divide-y">
+              {kind === 'regulation' && chapter && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => pickItem(
+                      { hospitalType, hospitalName, documentType, documentTitle: '', additionalContext, chapterNumber: chapter.chapterNumber, chapterTitle: chapter.chapterTitle },
+                      `${chapter.chapterTitle} ${docTypeLabel}`,
+                    )}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 ${documentTitle === `${chapter.chapterTitle} ${docTypeLabel}` ? 'bg-blue-100 font-semibold text-blue-800' : 'text-slate-700'}`}
+                  >
+                    📚 제{chapter.chapterNumber}장 전체 {docTypeLabel} (기준 {chapter.items.length}개)
+                  </button>
+                  {chapter.items.map((it) => {
+                    const title = `${it.itemTitle} ${docTypeLabel}`;
+                    return (
+                      <button
+                        key={it.itemNumber}
+                        type="button"
+                        onClick={() => pickItem(
+                          { hospitalType, hospitalName, documentType, documentTitle: '', additionalContext, itemNumber: it.itemNumber, itemTitle: it.itemTitle, chapterNumber: chapter.chapterNumber, chapterTitle: chapter.chapterTitle },
+                          title,
+                        )}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 flex items-start gap-2 ${documentTitle === title ? 'bg-blue-100 text-blue-800' : 'text-slate-700'}`}
+                      >
+                        <span className="font-mono text-xs text-blue-600 shrink-0 w-10">{it.itemNumber}</span>
+                        <span className="min-w-0">{it.itemTitle}</span>
+                      </button>
+                    );
+                  })}
+                </>
+              )}
+
+              {kind === 'checklist' && chapter && (
+                chapter.checklists.length > 0 ? chapter.checklists.map((c) => (
+                  <button
+                    key={c.name}
+                    type="button"
+                    onClick={() => pickItem(
+                      { hospitalType, hospitalName, documentType, documentTitle: '', additionalContext, itemNumber: c.itemNumber, chapterNumber: chapter.chapterNumber, chapterTitle: chapter.chapterTitle },
+                      c.name,
+                    )}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 ${documentTitle === c.name ? 'bg-blue-100 font-semibold text-blue-800' : 'text-slate-700'}`}
+                  >
+                    ☑ {c.name}
+                  </button>
+                )) : <div className="px-3 py-4 text-xs text-slate-400 text-center">이 장에 등록된 점검표가 없습니다</div>
+              )}
+
+              {kind === 'form' && chapter && (
+                chapter.forms.length > 0 ? chapter.forms.map((f) => (
+                  <button
+                    key={f.name}
+                    type="button"
+                    onClick={() => pickItem(
+                      { hospitalType, hospitalName, documentType, documentTitle: '', additionalContext, itemNumber: f.itemNumber, chapterNumber: chapter.chapterNumber, chapterTitle: chapter.chapterTitle },
+                      f.name,
+                    )}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 ${documentTitle === f.name ? 'bg-blue-100 font-semibold text-blue-800' : 'text-slate-700'}`}
+                  >
+                    📝 {f.name}
+                  </button>
+                )) : <div className="px-3 py-4 text-xs text-slate-400 text-center">이 장에 등록된 서식이 없습니다</div>
+              )}
+            </div>
+
+            {documentTitle && (
+              <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                선택됨: <span className="font-semibold">{documentTitle}</span>
+                {selectedRef?.itemNumber && <span className="text-blue-500"> · 기준 {selectedRef.itemNumber} 원문 근거 반영</span>}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 추가 컨텍스트 */}
@@ -339,21 +505,9 @@ export default function GeneratePage() {
     },
   ]);
   
-  const [currentInput, setCurrentInput] = useState<{
-    hospitalType: HospitalType;
-    hospitalName: string;
-    documentTitle: string;
-    documentType: DocumentType;
-  } | null>(null);
+  const [currentInput, setCurrentInput] = useState<GenerateInput | null>(null);
 
-  const handleGenerate = async (data: {
-    hospitalType: HospitalType;
-    hospitalName: string;
-    documentType: DocumentType;
-    documentTitle: string;
-    additionalContext: string;
-    logoUrl?: string;
-  }) => {
+  const handleGenerate = async (data: GenerateInput) => {
     setIsGenerating(true);
     setResult(null);
     setError('');
@@ -427,6 +581,7 @@ export default function GeneratePage() {
       hospitalName: item.hospitalName,
       documentTitle: item.documentTitle,
       documentType: item.documentType,
+      additionalContext: '',
     });
   };
 
@@ -591,6 +746,11 @@ export default function GeneratePage() {
                               documentType: 'form' as DocumentType,
                               documentTitle: f,
                               additionalContext: `"${currentInput.documentTitle}" 규정에 첨부되는 실무 서식입니다. A4 1장 분량의 표 중심 서식(기재란·서명란 포함)으로 작성해주세요.${currentStandard ? ` 관련 인증기준: ${currentStandard.number} ${currentStandard.title}` : ''}`,
+                              // 규정과 같은 기준의 원문 근거를 서식에도 반영(기준번호 형태일 때만)
+                              itemNumber: currentStandard && /^\d+\.\d/.test(currentStandard.number) ? currentStandard.number : currentInput.itemNumber,
+                              itemTitle: currentInput.itemTitle,
+                              chapterNumber: currentInput.chapterNumber,
+                              chapterTitle: currentInput.chapterTitle,
                             })
                           }
                           className="text-xs px-2.5 py-1 bg-white text-emerald-700 border border-emerald-300 rounded-lg hover:bg-emerald-100 disabled:opacity-50 cursor-pointer"
