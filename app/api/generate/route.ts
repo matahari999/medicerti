@@ -264,10 +264,11 @@ ${FORM_FORMAT_GUIDE}${uploadedRefBlock}${referenceContext}`
         signal: AbortSignal.timeout(isFullChapterRequest ? 100000 : 45000), // 장 전체 요청은 컨텍스트·출력이 커서 타임아웃을 넉넉히 잡는다
       });
 
+      // 429(분당 요청 한도)·503(과부하)은 짧게 재시도한다. 무료 등급은 RPM이 낮아
+      // 여러 문서를 연달아 생성하면 429가 잦은데, 몇 초 뒤엔 대개 회복된다.
       let response = await callGemini();
-      if (response.status === 503) {
-        // 모델 일시 과부하 — 2초 후 1회 재시도
-        await new Promise((r) => setTimeout(r, 2000));
+      for (let attempt = 0; attempt < 2 && (response.status === 429 || response.status === 503); attempt++) {
+        await new Promise((r) => setTimeout(r, 4000 * (attempt + 1)));
         response = await callGemini();
       }
 
