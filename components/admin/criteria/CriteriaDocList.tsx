@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { FileText, Loader2, Pencil, Trash2, ExternalLink, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { CRITERIA_DOCS_CHANGED } from './CriteriaPdfUploader'
 
 interface DocItem {
   path: string
@@ -41,6 +42,13 @@ export function CriteriaDocList() {
   }, [])
 
   useEffect(() => { void load() }, [load])
+
+  // 업로더가 새 파일을 올리면 목록을 다시 불러온다(별도 컴포넌트라 router.refresh()로는 갱신 안 됨).
+  useEffect(() => {
+    const handler = () => { void load() }
+    window.addEventListener(CRITERIA_DOCS_CHANGED, handler)
+    return () => window.removeEventListener(CRITERIA_DOCS_CHANGED, handler)
+  }, [load])
 
   const startEdit = (d: DocItem) => {
     setEditingPath(d.path)
