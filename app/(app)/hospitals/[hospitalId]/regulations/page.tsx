@@ -1,13 +1,14 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ChevronLeft, BookOpen, Upload, Sparkles } from 'lucide-react'
+import { ChevronLeft, BookOpen, Upload, Sparkles, ListChecks } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getHospital } from '@/lib/services/hospital.service'
 import { requireHospitalMember } from '@/lib/auth'
 import { EmptyState } from '@/components/ui/empty-state'
 import { RegulationPdfUploader } from '@/components/regulations/RegulationPdfUploader'
 import { RegulationBatchGenerator } from '@/components/regulations/RegulationBatchGenerator'
+import { RegulationTargetedGenerator } from '@/components/regulations/RegulationTargetedGenerator'
 import { RegulationsClient } from './RegulationsClient'
 
 type Props = { params: Promise<{ hospitalId: string }> }
@@ -89,6 +90,15 @@ export default async function RegulationsPage({ params }: Props) {
           규정집 PDF 업로드
         </h2>
         <RegulationPdfUploader hospitalId={hospitalId} existing={existingDocs} />
+      </div>
+
+      {/* 장/기준 지정 생성 — 등록된 규정집·기준집·사례집 원문에서 해당 기준의 근거를 찾아 반영 */}
+      <div className="bg-white rounded-xl border p-6 space-y-3">
+        <h2 className="text-base font-semibold flex items-center gap-2">
+          <ListChecks className="w-4 h-4 text-sky-600" />
+          장·기준 지정 규정집 생성
+        </h2>
+        <RegulationTargetedGenerator hospitalId={hospitalId} />
       </div>
 
       {/* AI 규정집 상세 생성 섹션 — 병원 유형에 맞는 마스터 원문(요양=규정집 합본, 정신=표준지침 기반 템플릿)을 근거로 생성 */}

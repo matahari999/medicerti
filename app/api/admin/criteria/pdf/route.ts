@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { isPlatformAdmin } from '@/lib/services/admin.service'
 import { upsertCriteriaDoc, deleteCriteriaDoc, type CriteriaDocCategory } from '@/lib/services/criteriaDocs.service'
+import { indexCriteriaPdf, deleteCriteriaChunks } from '@/lib/services/referenceStore.service'
+
+// 업로드 직후 텍스트 추출·임베딩까지 하므로 기본 실행시간으로는 부족하다.
+export const maxDuration = 300
 
 export async function POST(req: Request) {
   const isAdmin = await isPlatformAdmin()
@@ -27,10 +31,13 @@ export async function POST(req: Request) {
   const title = (form.get('title') as string | null)?.trim() || file.name.replace(/\.pdf$/i, '')
   const category = ((form.get('category') as string | null) === 'standard' ? 'standard' : 'etc') as CriteriaDocCategory
 
+  const hospitalType = (form.get('hospitalType') as string | null) || 'auto'
+
   const path = `criteria/${crypto.randomUUID()}.pdf`
+  const buffer = Buffer.from(await file.arrayBuffer())
   const { error: uploadError } = await supabase.storage
     .from('documents')
-    .upload(path, file, { contentType: 'application/pdf', upsert: false })
+    .upload(path, buffer, { contentType: 'application/pdf', upsert: false })
 
   if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 })
 
@@ -42,7 +49,19 @@ export async function POST(req: Request) {
     uploadedAt: new Date().toISOString(),
   })
 
-  return NextResponse.json({ path, title })
+  // 규정집 생성이 근거로 쓸 수 있도록 본문을 청킹해 색인한다.
+  // 색인이 실패해도 업로드 자체는 성공으로 둔다(어드민 화면에서 재색인 가능).
+  let indexed: number | null = null
+  let indexError: string | null = null
+  try {
+    const result = await indexCriteriaPdf({ path, title, buffer, hospitalType })
+    indexed = result.chunks
+  } catch (e) {
+    indexError = e instanceof Error ? e.message : String(e)
+    console.error(`[criteria/pdf] 색인 실패 ${path}:`, e)
+  }
+
+  return NextResponse.json({ path, title, indexed, indexError })
 }
 
 // 제목/카테고리 수정
@@ -78,6 +97,7 @@ export async function DELETE(req: Request) {
 
   try {
     await deleteCriteriaDoc(path)
+    await deleteCriteriaChunks(path)
     return NextResponse.json({ ok: true })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

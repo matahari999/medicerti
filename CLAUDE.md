@@ -65,6 +65,14 @@ supabase/
 - 인증 기준 데이터: `accreditation_criteria` 테이블에서 `hospital_type` 컬럼으로 필터.
 - 템플릿/문서도 병원 유형별로 분리 생성.
 
+## 규정집 생성 근거 코퍼스 (reference_chunks)
+- 어드민이 `/admin/criteria`에 올린 PDF는 업로드 시 본문을 규정번호 단위로 잘라 `reference_chunks`에 적재한다(`lib/referenceIngest.ts` → `lib/services/referenceStore.service.ts`).
+- repo의 `guidelines/*/raw_text.txt`(인증기준집·규정 사례집·2021 규정집 합본)는 `npx jiti scripts/ingest-reference-corpus.ts`로 적재한다.
+- 검색은 `lib/referenceSearch.ts`: 기준번호 정확매칭 → pgvector 의미검색(`match_reference_chunks`) → 같은 장 순.
+- `reference_chunks`는 RLS 활성화 + 정책 없음 = 서비스 롤 전용. 다른 병원 규정 원문이 구독자에게 직접 노출되면 안 되므로 정책을 추가하지 말 것.
+- 생성 문서의 `managed_documents.source_refs`(출처)는 **플랫폼 관리자에게만** 렌더링한다. 구독자 화면에서는 서버가 아예 내려보내지 않는다.
+- 임베딩은 `gemini-embedding-001` 768차원(정규화 필수). `text-embedding-004`는 지원 종료됨. 동시 요청 3개 초과 시 429 — `embedTextWithRetry` 사용.
+
 ## 문서 상태 워크플로우
 ```
 draft → under_review → approved → archived

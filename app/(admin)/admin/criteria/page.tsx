@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { CriteriaUploader } from '@/components/admin/criteria/CriteriaUploader'
 import { CriteriaPdfUploader } from '@/components/admin/criteria/CriteriaPdfUploader'
 import { CriteriaDocList } from '@/components/admin/criteria/CriteriaDocList'
+import { CriteriaIndexPanel } from '@/components/admin/criteria/CriteriaIndexPanel'
 import { BookOpen, Layers, FileText, ListTree, Hash } from 'lucide-react'
 
 export const metadata: Metadata = { title: '인증기준 관리 — 어드민' }
@@ -80,6 +81,16 @@ export default async function AdminCriteriaPage() {
           제목과 분류(인증기준집/기타 항목)를 지정하면 일반 구독자의 &quot;인증 자료실&quot; 화면에도 노출됩니다.
         </p>
         <CriteriaPdfUploader />
+      </div>
+
+      {/* 본문 색인 현황 — 규정집 자동 생성이 근거로 쓰는 데이터 */}
+      <div className="bg-white rounded-xl border p-6 space-y-3">
+        <h2 className="text-base font-semibold">규정집 생성 근거 색인</h2>
+        <p className="text-sm text-muted-foreground">
+          업로드된 PDF는 본문을 규정번호 단위로 잘라 저장해두고, 구독자가 특정 장·기준의 규정집을 만들 때
+          해당 기준의 원문을 찾아 근거로 사용합니다. 업로드 시 자동 색인되며, 실패했거나 이전에 올린 자료는 여기서 다시 색인합니다.
+        </p>
+        <CriteriaIndexPanel />
       </div>
 
       {/* 등록된 자료 관리 */}

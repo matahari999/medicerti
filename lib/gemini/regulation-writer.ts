@@ -136,8 +136,22 @@ ${referenceBlock}
 ${cycleLabel}에 맞추어, 실무자가 바로 사용할 수 있을 정도로 구체적으로 작성하세요.
 각 조항에는 담당 부서(간호부, QPS실, 행정부, 의무기록실 등)와 수행 주기(매일, 매주, 매월, 분기별 등)를 명시하세요.${params.reference ? '\n반드시 위 [실제 규정집 원문]의 구조와 내용을 근거로 작성하고, 원문에 없는 내용은 관련 법령 근거가 있는 경우에만 조문을 명시하여 추가하세요.' : ''}`
 
-  const result = await model.generateContent(prompt)
-  const raw = result.response.text()
+  // Gemini가 간헐적으로 500/503을 뱉는다 — 규정 1건 생성이 통째로 실패하지 않도록 재시도한다.
+  let raw = ''
+  let lastError: unknown
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const result = await model.generateContent(prompt)
+      raw = result.response.text()
+      break
+    } catch (e) {
+      lastError = e
+      const msg = e instanceof Error ? e.message : String(e)
+      if (!/\b(429|500|502|503|504)\b/.test(msg) || attempt === 2) throw e
+      await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)))
+    }
+  }
+  if (!raw) throw lastError instanceof Error ? lastError : new Error(String(lastError))
   return parseRegulation(raw)
 }
 

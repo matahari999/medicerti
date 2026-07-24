@@ -29,6 +29,8 @@ export function CriteriaPdfUploader() {
   const [dragOver, setDragOver] = useState(false)
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [category, setCategory] = useState<'standard' | 'etc'>('etc')
+  // 색인 시 어느 병원 종별의 근거로 쓸지. 'auto'면 본문 키워드로 추정한다.
+  const [hospitalType, setHospitalType] = useState<'auto' | 'long_term_care' | 'psychiatric' | 'common'>('auto')
   const [uploading, setUploading] = useState(false)
   const [summary, setSummary] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -102,6 +104,7 @@ export function CriteriaPdfUploader() {
 
     let ok = 0
     let failed = 0
+    let indexedChunks = 0
 
     for (const item of pending) {
       setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, status: 'uploading', message: undefined } : q)))
@@ -110,7 +113,12 @@ export function CriteriaPdfUploader() {
         form.append('file', item.file)
         form.append('title', item.title.trim() || item.file.name.replace(/\.pdf$/i, ''))
         form.append('category', category)
+        form.append('hospitalType', hospitalType)
         const res = await fetch('/api/admin/criteria/pdf', { method: 'POST', body: form })
+        if (res.ok) {
+          const data = await res.clone().json().catch(() => null)
+          if (data?.indexed) indexedChunks += data.indexed as number
+        }
         if (!res.ok) {
           const text = await res.text()
           let msg = `HTTP ${res.status}`
@@ -129,7 +137,10 @@ export function CriteriaPdfUploader() {
     }
 
     setUploading(false)
-    setSummary(`${ok}개 업로드 완료${failed > 0 ? `, ${failed}개 실패` : ''}`)
+    setSummary(
+      `${ok}개 업로드 완료${failed > 0 ? `, ${failed}개 실패` : ''}` +
+        (indexedChunks > 0 ? ` · 본문 ${indexedChunks}개 조각 색인됨(규정집 생성 근거로 사용)` : '')
+    )
     if (ok > 0) {
       router.refresh()
       // 아래 "등록된 참고자료 관리" 목록은 클라이언트에서 따로 fetch하므로 router.refresh()로는 갱신되지 않는다.
@@ -201,6 +212,18 @@ export function CriteriaPdfUploader() {
             >
               <option value="etc">기타 항목</option>
               <option value="standard">인증기준집</option>
+            </select>
+            <select
+              value={hospitalType}
+              onChange={(e) => setHospitalType(e.target.value as typeof hospitalType)}
+              disabled={uploading}
+              title="규정집 생성 시 어느 병원 종별의 근거로 쓸지"
+              className="text-sm px-3 py-2 border border-blue-200 rounded-lg bg-white focus:outline-none"
+            >
+              <option value="auto">종별 자동판별</option>
+              <option value="long_term_care">요양병원</option>
+              <option value="psychiatric">정신병원</option>
+              <option value="common">종별 공통</option>
             </select>
             <Button size="sm" onClick={uploadAll} disabled={uploading || pendingCount === 0}>
               {uploading ? <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> 업로드 중...</> : `${pendingCount}개 업로드`}
